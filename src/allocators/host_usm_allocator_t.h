@@ -1,29 +1,14 @@
-#include <cstdint>
-#include <CL/sycl.hpp>
+#include "base_allocator.h"
+#pragma once
 
 template <typename T>
-class host_usm_allocator_t
+class host_usm_allocator_t : public base_allocator<T>
 {
-private:
-	sycl::queue queue;
 public:
-	host_usm_allocator_t(sycl::queue &q) : queue(q) {};
-	~host_usm_allocator_t();
-	T* allocate(std::size_t n);
-	void deallocate(T* p);
+	
+	host_usm_allocator_t(sycl::queue &q) : base_allocator<T>(q) {}
+
+	T* allocate(std::size_t n) override {
+		return sycl::malloc_host<T>(n, this->queue);
+	}
 };
-
-template <typename T>
-T* host_usm_allocator_t<T>::allocate(std::size_t n) {
-	return sycl::malloc_host<T>(n, this->queue);
-}
-
-template <typename T>
-void host_usm_allocator_t<T>::deallocate(T* p) {
-	sycl::free((void*) p, this->queue);
-}
-
-template <typename T>
-host_usm_allocator_t<T>::~host_usm_allocator_t(){
-	return;
-}
