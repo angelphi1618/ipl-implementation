@@ -27,4 +27,10 @@ int main() {
 	imageloader.loadImage("lolita.bmp");
 	imageloader.saveImage("lolita2.bmp");
 
+	image<uint8_t> imagen2(Q, sycl::range(1200, 900));
+	image_persistance<uint8_t> imageloader2(imagen2);
+
+	imageloader2.loadImage("lolita.bmp");
+	imageloader2.saveImage("lolita3.bmp");
+
 }

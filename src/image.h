@@ -28,8 +28,6 @@ public:
 		this->data = this->allocator->allocate(this->defaultChannels * image_size.size());
 	}
 
-
-
 	std::size_t get_size() const {
 		return this->size.size();
 	}
