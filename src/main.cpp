@@ -6,6 +6,7 @@
 
 #include "image.h"
 #include "image_persistance/bmp_persistance.h"
+#include "roi_rect.h"
 
 int main() {
 
@@ -39,5 +40,15 @@ int main() {
 
 	imageloader2.loadImage("lolita.bmp");
 	imageloader2.saveImage("lolita3.bmp");
+
+	bmp_persistance<uint8_t>::saveImage(imagen2, "lolitaestatica.bmp");
+
+	roi_rect rectangulo{sycl::range<2>(200,300), sycl::range<2>(350, 20)};
+
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagen3 = imagen.get_roi({sycl::range<2>(300,100), sycl::range<2>(500, 10)});
+
+	std::cout<<"hola" << std::endl;
+
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagen3, "lolitaroi.bmp");
 
 }
