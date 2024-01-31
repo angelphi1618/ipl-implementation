@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include "image.h"
-#include "image_persistance.h"
+#include "image_persistance/bmp_persistance.h"
 
 int main() {
 
@@ -22,13 +22,13 @@ int main() {
 	
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
 
-	image_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
 
 	imageloader.loadImage("lolita.bmp");
 	imageloader.saveImage("lolita2.bmp");
 
 	image<uint8_t> imagen2(Q, sycl::range(1200, 900));
-	image_persistance<uint8_t> imageloader2(imagen2);
+	bmp_persistance<uint8_t> imageloader2(imagen2);
 
 	imageloader2.loadImage("lolita.bmp");
 	imageloader2.saveImage("lolita3.bmp");

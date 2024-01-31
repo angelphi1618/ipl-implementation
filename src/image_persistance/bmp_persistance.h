@@ -1,4 +1,6 @@
-#include "image.h"
+#include "../image.h"
+#include "image_persistance.h"
+
 #include <string>
 
 #include <fstream>
@@ -29,17 +31,16 @@ struct BMPHeader {
 #pragma pack(pop)
 
 template <typename DataT, typename AllocatorT = base_allocator<pixel<DataT>>>
-class image_persistance
+class bmp_persistance : public image_persistance<DataT, AllocatorT>
 {
 private:
-	image<DataT, AllocatorT>* img;
 	BMPHeader header;
-
 public:
-	image_persistance(image<DataT, AllocatorT>& img) : img(&img){}
 
-	void image_persistance<DataT, AllocatorT>::loadImage(std::string path){
-		sycl::queue* Q = img->get_queue();
+	bmp_persistance(image<DataT, AllocatorT>& img) : image_persistance<DataT, AllocatorT>(img) {}
+
+	void loadImage(std::string path){
+		sycl::queue* Q = this->img->get_queue();
 		
 		std::ifstream file(path, std::ios::binary);
 
@@ -61,7 +62,7 @@ public:
 		// Copiamos la imagen en ram al dispositivo
 		Q->memcpy(image_device, image_pixels.data(), header.fileSize - header.dataOffset).wait();
 
-		pixel<DataT>* data = img->get_data();
+		pixel<DataT>* data = this->img->get_data();
 		Q->submit([&](sycl::handler& cgh) {
 			// Convertimos la imagen lineal en un array de pixeles
 			cgh.parallel_for(sycl::range<1>(image_pixels.size()), [=](sycl::id<1> index) {
@@ -85,13 +86,13 @@ public:
 		sycl::free((void*)image_device, *Q);
 	}
 
-	void image_persistance<DataT, AllocatorT>::saveImage(std::string dest_path) {
+	void saveImage(std::string dest_path) {
 		sycl::queue* Q = this->img->get_queue();
 
 		// Reservamos espacio en dispositivo para generar la imagen lineal
 		uint8_t* image_device = sycl::malloc_device<uint8_t>(header.fileSize - header.dataOffset, *Q);
 
-		pixel<DataT>* data = img->get_data();
+		pixel<DataT>* data = this->img->get_data();
 
 		Q->submit([&](sycl::handler& cgh) {
 			cgh.parallel_for(sycl::range<1>(this->header.width * this->header.height), [=](sycl::id<1> index) {
@@ -127,7 +128,7 @@ public:
 	}
 
 	
-	~image_persistance()
+	~bmp_persistance()
 	{
 	};
 };
