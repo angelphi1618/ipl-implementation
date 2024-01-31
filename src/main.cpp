@@ -14,12 +14,19 @@ int main() {
 	sycl::queue Q(dev);
 
 	device_usm_allocator_t<pixel<uint8_t>> loca(Q);	
+	
+	// imagendata = loca.allocate(...)
+	// ev1 = Q.submit(...)
+	// ev2 = Q.submit(...)
+	// depencees (ev1, ev2)
+
+	// imagen(imagendata, dependeces) 
+
 
 	std::cout << "Running on "
 		<< Q.get_device().get_info<sycl::info::device::name>()
 		<< std::endl;
 
-	
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
 
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
