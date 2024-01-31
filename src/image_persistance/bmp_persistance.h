@@ -80,6 +80,7 @@ public:
 				default:
 					break;
 				}
+				data[index / 3].A = 255;
 			});
 		}).wait();
 
@@ -127,7 +128,6 @@ public:
 		std::cout << "BMP file copied successfully!" << std::endl;
 	}
 
-	
 	~bmp_persistance()
 	{
 	};

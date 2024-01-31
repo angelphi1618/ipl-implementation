@@ -4,4 +4,5 @@ struct pixel{
 	DataT R;
 	DataT G;
 	DataT B;
+	DataT A;
 };
