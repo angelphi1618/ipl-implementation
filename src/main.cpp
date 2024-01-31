@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "image.h"
+#include "image_persistance.h"
 
 int main() {
 
@@ -12,28 +13,18 @@ int main() {
 	dev = sycl::device(sycl::cpu_selector());
 	sycl::queue Q(dev);
 
-	device_usm_allocator_t<uint8_t> loca(Q);	
+	device_usm_allocator_t<pixel<uint8_t>> loca(Q);	
 
 	std::cout << "Running on "
 		<< Q.get_device().get_info<sycl::info::device::name>()
 		<< std::endl;
 
-	uint8_t* puntero = loca.allocate(1024);
-
-	// for (int i = 0; i < 24; i++)
-	// 	puntero[i] = i;
-
-	sycl::range<1> numItems(1024);
-
-	Q.submit([&](sycl::handler& handler) {
-		handler.parallel_for(numItems, [=](sycl::id<1> idx) {
-			puntero[idx] = idx;
-		});
-	}).wait();
-
-	// for (int i = 0; i < 24; i++)
-	// 	printf("%d\n", puntero[i]);
 	
-	loca.deallocate(puntero);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
+
+	image_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
+
+	imageloader.loadImage("lolita.bmp");
+	imageloader.saveImage("lolita2.bmp");
 
 }
