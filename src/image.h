@@ -57,6 +57,10 @@ public:
 		return this->size.size();
 	}
 
+	sycl::range<2> get_size() {
+		return this->size;
+	}	
+
 	base_allocator<pixel<DataT>>* get_allocator() const {
 		return this->allocator;
 	}

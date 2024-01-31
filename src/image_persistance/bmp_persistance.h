@@ -35,6 +35,7 @@ class bmp_persistance : public image_persistance<DataT, AllocatorT>
 {
 private:
 	BMPHeader header;
+	static BMPHeader generate_header(int width, int height);
 public:
 
 	bmp_persistance(image<DataT, AllocatorT>& img) : image_persistance<DataT, AllocatorT>(img) {}
@@ -128,7 +129,78 @@ public:
 		std::cout << "BMP file copied successfully!" << std::endl;
 	}
 
+	static void saveImage(image<DataT, AllocatorT>& img, std::string dest_path) {
+		// Debemos generar el header primero
+
+		int width = img.get_size().get(0);
+		int heigth = img.get_size().get(1);
+
+		BMPHeader header = generate_header(width, heigth);
+
+		sycl::queue* Q = img.get_queue();
+
+		// Reservamos espacio en dispositivo para generar la imagen lineal
+		uint8_t* image_device = sycl::malloc_device<uint8_t>(header.fileSize - header.dataOffset, *Q);
+
+		pixel<DataT>* data = img.get_data();
+
+		Q->submit([&](sycl::handler& cgh) {
+			cgh.parallel_for(sycl::range<1>(header.width * header.height), [=](sycl::id<1> index) {
+				// pixeles_device pixeles en gpu
+				// image_device lineal en gpu
+				image_device[index * 3] =  data[index].R;
+				image_device[index * 3 + 1] =  data[index].G;
+				image_device[index * 3 + 2] =  data[index].B;
+			});
+		}).wait();
+
+		std::vector<uint8_t> output(header.width * header.height * 3);
+
+		// Copiamos la imagen lineal del dispositivo a ram
+		Q->memcpy(output.data(), image_device, header.width * header.height * 3).wait();
+
+		std::ofstream outFile(dest_path, std::ios::binary);
+		if (!outFile.is_open()) {
+			std::cerr << "Failed to open output file!" << std::endl;
+			return;
+		}
+
+		outFile.write(reinterpret_cast<char*>(&header), sizeof(BMPHeader));
+
+		// Write the pixel data to the output file
+		outFile.write(reinterpret_cast<char*>(output.data()), output.size());
+
+		// Close the output file
+		outFile.close();
+		sycl::free((void*)image_device, *Q);
+
+		std::cout << "BMP file copied successfully!" << std::endl;
+	}
+
 	~bmp_persistance()
 	{
 	};
 };
+
+template <typename DataT, typename AllocatorT>
+BMPHeader bmp_persistance<DataT, AllocatorT>::generate_header(int width, int height){
+		BMPHeader header;
+
+		header.signature = 19778;
+		header.fileSize = width * height * 3 + 54;
+		header.reserved = 0;
+		header.dataOffset = 54;
+		header.headerSize = 40;
+		header.width = width;
+		header.height = height;
+		header.planes = 1;
+		header.bitsPerPixel = 24;
+		header.compression = 0;
+		header.dataSize = width * height * 3;
+		header.horizontalRes = 3780;
+		header.verticalRes = 3780;
+		header.colors = 0;
+		header.importantColors = 0;
+
+		return header;
+}
