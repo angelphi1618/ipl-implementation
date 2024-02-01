@@ -68,7 +68,7 @@ public:
 			cgh.parallel_for(sycl::range<2>(rect.get_width(), rect.get_height()), [=](sycl::id<2> idx){
 				
 				// algo pasa
-				int i_origen = (rect.get_x_offset() + idx[0]) + (idx[1] + (height - rect.get_height())) * width;
+				int i_origen = (rect.get_x_offset() + idx[0]) + (idx[1] + (height - rect.get_height() - rect.get_y_offset())) * width;
 
 				//ok
 				int i_destino = idx[0] + idx[1] * rect.get_width();
