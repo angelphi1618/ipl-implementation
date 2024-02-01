@@ -55,23 +55,22 @@ public:
 	}
 
 	image<DataT, AllocatorT>* get_roi(roi_rect rect) const {
-		image<DataT, AllocatorT>* roi_image = new image(*this->queue, rect.size);
+		image<DataT, AllocatorT>* roi_image = new image(*this->queue, rect._size);
 
 		pixel<DataT>* roi_image_data = roi_image->get_data();
 		pixel<DataT>* current_image_data = this->data;
 		int width = this->size.get(0);
+		int height = this->size.get(1);
 
 		std::cout << width << std::endl;
 
 		this->queue->submit([&](sycl::handler& cgh) {
-			std::cout << rect.get_width() << std::endl;
-			std::cout << rect.get_height() << std::endl;
-
-			std::cout << rect.get_x_offset() << std::endl;
-			std::cout << rect.get_y_offset() << std::endl;
-
 			cgh.parallel_for(sycl::range<2>(rect.get_width(), rect.get_height()), [=](sycl::id<2> idx){
-				int i_origen = (rect.get_x_offset() + idx[0]) + (rect.get_y_offset() + idx[1]) * width;
+				
+				// algo pasa
+				int i_origen = (rect.get_x_offset() + idx[0]) + (idx[1] + (height - rect.get_height())) * width;
+
+				//ok
 				int i_destino = idx[0] + idx[1] * rect.get_width();
 
 				roi_image_data[i_destino] = current_image_data[i_origen];

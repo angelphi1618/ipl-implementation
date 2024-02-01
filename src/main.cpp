@@ -43,9 +43,13 @@ int main() {
 
 	bmp_persistance<uint8_t>::saveImage(imagen2, "lolitaestatica.bmp");
 
-	roi_rect rectangulo{sycl::range<2>(200,300), sycl::range<2>(350, 20)};
+	roi_rect rectangulo(sycl::range<2>(300,300), sycl::range<2>(496,60));
 
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagen3 = imagen.get_roi({sycl::range<2>(300,100), sycl::range<2>(500, 10)});
+
+	//image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagen3 = imagen.get_roi({sycl::range<2>(500,500), sycl::range<2>(0, 0)});
+
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagen3 = imagen.get_roi(rectangulo);
+
 
 	std::cout<<"hola" << std::endl;
 
