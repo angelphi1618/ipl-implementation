@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 template <typename DataT = uint8_t>
 struct pixel{

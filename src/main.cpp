@@ -8,13 +8,16 @@
 #include "image_persistance/bmp_persistance.h"
 #include "roi_rect.h"
 
+#include "algorithms/grayscale.h"
+
 int main() {
 
 	sycl::device dev;
 	dev = sycl::device(sycl::cpu_selector());
 	sycl::queue Q(dev);
 
-	device_usm_allocator_t<pixel<uint8_t>> loca(Q);	
+	device_usm_allocator_t<pixel<uint8_t>> loca(Q);
+	
 	
 	// imagendata = loca.allocate(...)
 	// ev1 = Q.submit(...)
@@ -49,10 +52,23 @@ int main() {
 	//image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagen3 = imagen.get_roi({sycl::range<2>(500,500), sycl::range<2>(0, 0)});
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagen3 = imagen.get_roi(rectangulo);
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagen3, "lolitaroi.bmp");
 
+
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenColor(Q, sycl::range(1200, 900), loca);
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderColor(imagenColor);
+	imageloaderColor.loadImage("lolita.bmp");
+
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenGris(Q, sycl::range(1200, 900), loca);
+	std::cout << "imagen cargada" << std::endl;
+
+	grayscale(Q, imagenColor, imagenGris).wait();
+
+	std::cout << "A guardar la imagen" << std::endl;
+
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenGris, "lolitagris.bmp");
 
 	std::cout<<"hola" << std::endl;
 
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagen3, "lolitaroi.bmp");
 
 }

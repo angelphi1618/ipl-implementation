@@ -55,7 +55,7 @@ public:
 	}
 
 	image<DataT, AllocatorT>* get_roi(roi_rect rect) const {
-		image<DataT, AllocatorT>* roi_image = new image(*this->queue, rect._size);
+		image<DataT, AllocatorT>* roi_image = new image(*this->queue, rect.size);
 
 		pixel<DataT>* roi_image_data = roi_image->get_data();
 		pixel<DataT>* current_image_data = this->data;
@@ -65,9 +65,14 @@ public:
 		std::cout << width << std::endl;
 
 		this->queue->submit([&](sycl::handler& cgh) {
+
+			sycl::stream os(1024*1024, 1024, cgh);
+
 			cgh.parallel_for(sycl::range<2>(rect.get_width(), rect.get_height()), [=](sycl::id<2> idx){
-				
-				// algo pasa
+				// os << "idx: (" << idx.get(0) << ", " << idx.get(1) << ")" << sycl::endl;
+				// os << (height - rect.get_height() - rect.get_y_offset()) << sycl::endl;
+
+				// El acceso al eje Y empieza por abajo
 				int i_origen = (rect.get_x_offset() + idx[0]) + (idx[1] + (height - rect.get_height() - rect.get_y_offset())) * width;
 
 				//ok
@@ -80,7 +85,7 @@ public:
 		return roi_image;
 	}
 
-	std::size_t get_size() const {
+	std::size_t get_linear_size() const {
 		return this->size.size();
 	}
 
