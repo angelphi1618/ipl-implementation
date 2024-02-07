@@ -13,12 +13,15 @@ private:
 	pixel<DataT>* data;
 	sycl::queue* queue;
 
+	roi_rect roi;
+
 	base_allocator<pixel<DataT>>* allocator = nullptr;
 	bool allocatorAllocated = false;
 
 	const int defaultChannels = 4;
 public:
-	explicit image(sycl::queue &queue, const sycl::range<2> &image_size) : queue(&queue), size(image_size) {
+	explicit image(sycl::queue &queue, const sycl::range<2> &image_size) : queue(&queue), size(image_size),
+					roi(this->size, sycl::range<2>(0, 0)) {
 		this->allocator = new host_usm_allocator_t<pixel<DataT>>(queue);
 		this->allocatorAllocated = true;
 
@@ -26,8 +29,22 @@ public:
 	}
 
 	explicit image(sycl::queue &queue, const sycl::range<2> &image_size, AllocatorT allocator) 
-	: queue(&queue), size(image_size), allocator(&allocator) {
+	: queue(&queue), size(image_size), allocator(&allocator), roi(image_size, sycl::range<2>(0, 0)) {
 		this->data = this->allocator->allocate(this->defaultChannels * image_size.size());
+	}
+
+	explicit image(sycl::queue &queue, const sycl::range<2> &image_size, AllocatorT allocator, roi_rect& roi_rect) 
+	: queue(&queue), size(image_size), allocator(&allocator), roi(sycl::range<2>(0, 0), sycl::range<2>(0, 0)) {
+		this->data = this->allocator->allocate(this->defaultChannels * image_size.size());
+
+		if (roi_rect.get_x_offset() < 0 || roi_rect.get_y_offset() < 0)
+			throw invalid_argument("ROI ubicado fuera de la imagen");
+
+		if (roi_rect.get_x_offset() + roi_rect.get_width() > this->size.get(0) ||
+			roi_rect.get_y_offset() + roi_rect.get_height() > this->size.get(1))
+			throw invalid_argument("ROI sobresale la imagen");
+
+		this->roi = roi_rect;
 	}
 
 	explicit image(sycl::queue &queue, pixel<DataT> *image_data, const sycl::range<2> &image_size, const std::vector<sycl::event> &dependencies = {})
@@ -35,6 +52,7 @@ public:
 
 		if (image_data == nullptr)
 			throw invalid_argument("image_data no puede ser null.");
+		this->roi = {this->size, sycl::range<2>(0, 0)};
 
 		// Esperamos a que acaben todos los eventos de los que se nos indica dependencia
 		this->queue.submit([&](sycl::handler& cgh) {
@@ -48,14 +66,22 @@ public:
 		if (image_data == nullptr)
 			throw invalid_argument("image_data no puede ser null.");
 
+		this->roi = {this->size, sycl::range<2>(0, 0)};
+		
 		// Esperamos a que acaben todos los eventos de los que se nos indica dependencia
 		this->queue.submit([&](sycl::handler& cgh) {
 			cgh.depends_on(dependencies);
 		}).wait();
 	}
 
+	image<DataT, AllocatorT>* get_roi() const {
+		return this->get_roi(this->roi);
+	}
+
 	image<DataT, AllocatorT>* get_roi(roi_rect rect) const {
 		image<DataT, AllocatorT>* roi_image = new image(*this->queue, rect.size);
+
+		// TODO: Comprobar compatibilidad del roi con la imagen y lanzar la excepción correspondiente
 
 		pixel<DataT>* roi_image_data = roi_image->get_data();
 		pixel<DataT>* current_image_data = this->data;
@@ -103,6 +129,10 @@ public:
 
 	sycl::queue* get_queue(){
 		return this->queue;
+	}
+
+	roi_rect get_roi_rect() const {
+		return this->roi;
 	}
 
 	~image() {

@@ -62,7 +62,7 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenGris(Q, sycl::range(1200, 900), loca);
 	std::cout << "imagen cargada" << std::endl;
 
-	grayscale(Q, imagenColor, imagenGris).wait();
+	rgb_to_gray_roi(Q, imagenColor, imagenGris).wait();
 
 	std::cout << "A guardar la imagen" << std::endl;
 
