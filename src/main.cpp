@@ -8,6 +8,7 @@
 #include "image_persistance/bmp_persistance.h"
 #include "roi_rect.h"
 #include "image_persistance/png_persistance.h"
+#include "border_generator/border_generator.h"
 
 #include "algorithms/grayscale.h"
 
@@ -43,9 +44,12 @@ int main() {
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPika(Q, sycl::range(400,400), loca);
 
+
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png(imagenPika);
 	png.loadImage("pika.png");
 
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagenConBorder = border_default(imagenPika, 10);
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagenConBorder, "pikaConBorde.png");
 	roi_rect rectangulo(sycl::range<2>(200,200), sycl::range<2>(40,60));
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagenPikaRecortada = imagenPika.get_roi(rectangulo);
 
