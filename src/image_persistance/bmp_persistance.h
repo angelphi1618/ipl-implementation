@@ -89,6 +89,9 @@ public:
 	}
 
 	void saveImage(std::string dest_path) {
+
+		std::cout << "guardando imagen" << std::endl;
+
 		sycl::queue* Q = this->img->get_queue();
 
 		// Reservamos espacio en dispositivo para generar la imagen lineal

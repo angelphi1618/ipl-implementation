@@ -7,6 +7,7 @@
 #include "image.h"
 #include "image_persistance/bmp_persistance.h"
 #include "roi_rect.h"
+#include "image_persistance/png_persistance.h"
 
 #include "algorithms/grayscale.h"
 
@@ -35,8 +36,24 @@ int main() {
 
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
 
+
 	imageloader.loadImage("lolita.bmp");
 	imageloader.saveImage("lolita2.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagen, "lolitaDesdeFuera.bmp");
+
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPika(Q, sycl::range(400,400), loca);
+
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png(imagenPika);
+	png.loadImage("pika.png");
+
+	roi_rect rectangulo(sycl::range<2>(200,200), sycl::range<2>(40,60));
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagenPikaRecortada = imagenPika.get_roi(rectangulo);
+
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagenPikaRecortada, "pikaRecortada.png");
+
+	png.saveImage("pika3.png");
+
+	/*
 
 	image<uint8_t> imagen2(Q, sycl::range(1200, 900));
 	bmp_persistance<uint8_t> imageloader2(imagen2);
@@ -69,6 +86,7 @@ int main() {
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenGris, "lolitagris.bmp");
 
 	std::cout<<"hola" << std::endl;
+	*/
 
 
 }

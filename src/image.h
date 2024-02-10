@@ -19,12 +19,14 @@ private:
 	bool allocatorAllocated = false;
 
 	const int defaultChannels = 4;
+
+	//Estaría bien tener un constructor que no depende del size y que se le inserte desde los persistances y hacer tambien un set
 public:
 	explicit image(sycl::queue &queue, const sycl::range<2> &image_size) : queue(&queue), size(image_size),
 					roi(this->size, sycl::range<2>(0, 0)) {
 		this->allocator = new host_usm_allocator_t<pixel<DataT>>(queue);
 		this->allocatorAllocated = true;
-
+		//Siempre allocamos con * 4, es decir, estamos reservando mas memoria de la que luego usamos
 		this->data = this->allocator->allocate(this->defaultChannels * image_size.size());
 	}
 

@@ -1,6 +1,8 @@
 #include <CL/sycl.hpp>
 #include <string>
 
+#pragma once
+
 template <typename DataT, typename AllocatorT = base_allocator<pixel<DataT>>>
 class image_persistance {
 protected:
