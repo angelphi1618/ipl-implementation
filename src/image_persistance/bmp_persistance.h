@@ -70,13 +70,13 @@ public:
 				switch (index % 3)
 				{
 				case 0:
-					data[index / 3].R = image_device[index];
+					data[index / 3].B = image_device[index];
 					break;
 				case 1:
 					data[index / 3].G = image_device[index];
 					break;
 				case 2:
-					data[index / 3].B = image_device[index];
+					data[index / 3].R = image_device[index];
 					break;
 				default:
 					break;
@@ -103,9 +103,9 @@ public:
 			cgh.parallel_for(sycl::range<1>(this->header.width * this->header.height), [=](sycl::id<1> index) {
 				// pixeles_device pixeles en gpu
 				// image_device lineal en gpu
-				image_device[index * 3] =  data[index].R;
+				image_device[index * 3] =  data[index].B;
 				image_device[index * 3 + 1] =  data[index].G;
-				image_device[index * 3 + 2] =  data[index].B;
+				image_device[index * 3 + 2] =  data[index].R;
 			});
 		}).wait();
 
@@ -151,9 +151,10 @@ public:
 			cgh.parallel_for(sycl::range<1>(header.width * header.height), [=](sycl::id<1> index) {
 				// pixeles_device pixeles en gpu
 				// image_device lineal en gpu
-				image_device[index * 3] =  data[index].R;
+				//Los bmp tiene la B y la R volteadas
+				image_device[index * 3] =  data[index].B;
 				image_device[index * 3 + 1] =  data[index].G;
-				image_device[index * 3 + 2] =  data[index].B;
+				image_device[index * 3 + 2] =  data[index].R;
 			});
 		}).wait();
 

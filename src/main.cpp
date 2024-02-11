@@ -9,6 +9,7 @@
 #include "roi_rect.h"
 #include "image_persistance/png_persistance.h"
 #include "border_generator/border_generator.h"
+#include "border_generator/border_types.h"
 
 #include "algorithms/grayscale.h"
 
@@ -39,6 +40,10 @@ int main() {
 
 
 	imageloader.loadImage("lolita.bmp");
+
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorder = generate_border(imagen, {52, 70}, border_types::const_val, {0, 0, 255, 255});
+	imageloader.saveImage("lolitaLocal.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lolitaBorder, "lolitaConBorde.bmp");
 	imageloader.saveImage("lolita2.bmp");
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagen, "lolitaDesdeFuera.bmp");
 
@@ -48,7 +53,7 @@ int main() {
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png(imagenPika);
 	png.loadImage("pika.png");
 
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagenConBorder = border_default(imagenPika, 10);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagenConBorder = generate_border(imagenPika, {50, 20}, border_types::const_val, {0, 255, 0, 255});
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagenConBorder, "pikaConBorde.png");
 	roi_rect rectangulo(sycl::range<2>(200,200), sycl::range<2>(40,60));
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagenPikaRecortada = imagenPika.get_roi(rectangulo);
