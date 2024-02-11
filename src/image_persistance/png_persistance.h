@@ -52,24 +52,27 @@ class png_persistance : public image_persistance<DataT, AllocatorT>{
 
             pixel<DataT>* data = this->img->get_data();
             Q->submit([&](sycl::handler& cgh){
+				int _channels = channels;
                 cgh.parallel_for(sycl::range<1>(height * width * channels), [=](sycl::id<1> index){
                     //En vez de 4 deberian ser channels
-                    switch (index % 4)
-				{
-				case 0:
-					data[index / 4].R = image_device[index];
-					break;
-				case 1:
-					data[index / 4].G = image_device[index];
-					break;
-				case 2:
-					data[index / 4].B = image_device[index];
-					break;
-                case 3:
-                    data[index / 4].A = image_device[index];
-				default:
-					break;
-				}
+                    switch (index % _channels)
+					{
+					case 0:
+						data[index / _channels].R = image_device[index];
+						break;
+					case 1:
+						data[index / _channels].G = image_device[index];
+						break;
+					case 2:
+						data[index / _channels].B = image_device[index];
+						break;
+					case 3:
+						data[index / _channels].A = image_device[index];
+					default:
+						break;
+					}
+					if (_channels == 3)
+						data[index / _channels].A = 255;
                 });
             }).wait();
 
@@ -90,6 +93,7 @@ class png_persistance : public image_persistance<DataT, AllocatorT>{
 
             Q->submit([&](sycl::handler& cgh) {
                 cgh.parallel_for(sycl::range<1>(height * width), [=](sycl::id<1> index) {
+
                     image_device[index * 4] =  data[index].R;
                     image_device[index * 4 + 1] =  data[index].G;
                     image_device[index * 4 + 2] =  data[index].B;
