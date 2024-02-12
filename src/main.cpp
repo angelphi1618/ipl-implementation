@@ -62,16 +62,16 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lenitaBorderRepl = generate_border(imagenLena, {100, 50}, border_types::repl);
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lenitaBorderRepl, "lenita.bmp");
 
-	std::vector<float> kernel1{ 0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.25f,
-							   0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-							   0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+	std::vector<float> kernel1{0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.25f,
+							   0.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.00f,
+							   0.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.00f,
 							   0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.25f};
 
 	float* kernel = device_usm_allocator_t<float>(Q).allocate(kernel1.size());
 
-	Q.memcpy(kernel, kernel1.data(), kernel1.size());
+	Q.memcpy(kernel, kernel1.data(), kernel1.size() * sizeof(float));
 
-	filter_convolution_spec<float> kernel_spec({9, 4}, kernel);
+	filter_convolution_spec<float> kernel_spec({9 ,4}, kernel);
 
 	
 
