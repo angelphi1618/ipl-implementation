@@ -12,11 +12,12 @@
 #include "border_generator/border_types.h"
 
 #include "algorithms/grayscale.h"
+#include "algorithms/filter_convolution.h"
 
 int main() {
 
 	sycl::device dev;
-	dev = sycl::device(sycl::cpu_selector());
+	dev = sycl::device(sycl::gpu_selector());
 	sycl::queue Q(dev);
 
 	device_usm_allocator_t<pixel<uint8_t>> loca(Q);
@@ -36,6 +37,7 @@ int main() {
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLena(Q, sycl::range(512, 512), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutput(Q, sycl::range(512, 512), loca);
 
 
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
@@ -60,6 +62,24 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lenitaBorderRepl = generate_border(imagenLena, {100, 50}, border_types::repl);
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lenitaBorderRepl, "lenita.bmp");
 
+	std::vector<float> kernel1{ 0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.25f,
+							   0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+							   0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+							   0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.25f};
+
+	float* kernel = device_usm_allocator_t<float>(Q).allocate(kernel1.size());
+
+	Q.memcpy(kernel, kernel1.data(), kernel1.size());
+
+	filter_convolution_spec<float> kernel_spec({9, 4}, kernel);
+
+	
+
+	std::cout << "filtrado convolucion " << std::endl;
+	filter_convolution<float>(Q, imagenLena, imagenLenaOutput, kernel_spec, border_types::repl);
+	std::cout << "filtrado convolucion ok" << std::endl;
+
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaOutput, "lenitaFiltrada.bmp");
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png(imagenPika);
 	png.loadImage("pika.png");
@@ -75,17 +95,23 @@ int main() {
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye(Q, sycl::range(1242, 2088), loca);
-	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png_ye(ye);
-	png_ye.loadImage("ye.png");
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_filtrado(Q, sycl::range(1242, 2088), loca);
 
-	std::cout << "ye cargado de leche" << std::endl;
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png_ye(ye);
+
+	png_ye.loadImage("ye.png");
+	std::cout << "ye cargado" << std::endl;
+
+	filter_convolution<float>(Q, ye, ye_filtrado, kernel_spec, border_types::repl);
+
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* ye_borde = generate_border(ye, {1000, 500}, border_types::repl, {255,0,0,255});
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*ye_borde, "yeborde.png");
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(ye_filtrado, "yefiltrado.png");
 
 
 
-
+	
 
 
 

@@ -78,7 +78,7 @@ class png_persistance : public image_persistance<DataT, AllocatorT>{
 
             sycl::free((void*)image_device, *Q);
 
-            std::cout << "Imagen cargada" << std::endl;
+            // std::cout << "Imagen cargada" << std::endl;
 
         }
 
@@ -119,7 +119,7 @@ class png_persistance : public image_persistance<DataT, AllocatorT>{
             int w = img.get_size().get(0);
             int h = img.get_size().get(1);
 
-            std::cout << "h = " << h << " w = " << w << std::endl;
+            //std::cout << "h = " << h << " w = " << w << std::endl;
 
             uint8_t* image_device = sycl::malloc_device<uint8_t>(w * h * 4, *Q);
             pixel<DataT>* pixelData = img.get_data();

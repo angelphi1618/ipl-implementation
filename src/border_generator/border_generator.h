@@ -92,7 +92,7 @@ image<DataT, AllocatorT>* repl_border(image<DataT, AllocatorT>& img, sycl::range
 	pixel<DataT>* pixelBorderedImg = borderedImage->get_data();
 
 	std::cout << "Creando Borde" << std::endl;
-	std::cout << "w = " << newSizeW << " h = " << newSizeH << std::endl;
+	// std::cout << "w = " << newSizeW << " h = " << newSizeH << std::endl;
 	
 
 	Q->submit([&](sycl::handler& cgh){
