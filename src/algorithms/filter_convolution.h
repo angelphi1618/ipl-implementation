@@ -29,15 +29,20 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 	int kernel_width = kernel.kernel_size[0];
 	int kernel_height = kernel.kernel_size[1];
 
+	
+
 	return q.submit([&](sycl::handler& cgh) {
 
 		cgh.depends_on(dependencies);
 
 		std::cout << "kernel copiado" << std::endl;
 
+		//std::cout << typeid(*src.get_allocator()).name() << std::endl;
 
 		pixel<DataT>* src_data = bordered_image->get_data();
-		ComputeT* kernel_data = kernel.kernel_data;
+		ComputeT* kernel_data = static_cast<ComputeT*>(src.get_allocator()->allocate_bytes(kernel.kernel_size.size() * sizeof(ComputeT)));
+		q.memcpy(kernel_data, kernel.kernel_data, kernel.kernel_size.size() * sizeof(ComputeT));
+
 		pixel<DataT>* dst_data = dst.get_data();
 
 		int src_bordered_width = bordered_image->get_size().get(0);
@@ -49,9 +54,9 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 		std::cout << "lanzando parallel for" << std::endl;
 		// Tamaño de la imagen destino
 		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
-			os << "dentro del kernel" << sycl::endl;
+			// os << "dentro del kernel" << sycl::endl;
 
-			os << "kernel usado" << sycl::endl;
+			// os << "kernel usado" << sycl::endl;
 
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
@@ -74,7 +79,7 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 
 			dst_data[i_destino * dst_width + j_destino] = suma;
 
-			os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;
+			// os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;
 		});
 	});
 }

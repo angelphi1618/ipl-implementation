@@ -30,7 +30,7 @@ public:
 		this->data = this->allocator->allocate(this->defaultChannels * image_size.size());
 	}
 
-	explicit image(sycl::queue &queue, const sycl::range<2> &image_size, AllocatorT allocator) 
+	explicit image(sycl::queue &queue, const sycl::range<2> &image_size, AllocatorT& allocator) 
 	: queue(&queue), size(image_size), allocator(&allocator), roi(image_size, sycl::range<2>(0, 0)) {
 		this->data = this->allocator->allocate(this->defaultChannels * image_size.size());
 	}
@@ -62,7 +62,7 @@ public:
 		}).wait();
 	}
 
-	explicit image(sycl::queue &queue, pixel<DataT> *image_data, const sycl::range<2> &image_size, AllocatorT allocator, const std::vector<sycl::event> &dependencies = {})
+	explicit image(sycl::queue &queue, pixel<DataT> *image_data, const sycl::range<2> &image_size, AllocatorT& allocator, const std::vector<sycl::event> &dependencies = {})
 	: queue(&queue), size(image_size), allocator(&allocator), data(image_data) {
 
 		if (image_data == nullptr)

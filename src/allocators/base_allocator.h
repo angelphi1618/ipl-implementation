@@ -12,6 +12,7 @@ public:
 	~base_allocator() { return; };
 	
 	virtual T* allocate(std::size_t n) = 0;
+	virtual void* allocate_bytes(std::size_t n) = 0;
 
 	void deallocate(T* p) {
 		sycl::free((void*) p, this->queue);

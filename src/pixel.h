@@ -15,20 +15,20 @@ struct pixel{
 
 template<typename DataT, typename ComputeT>
 pixel<DataT> operator*(pixel<DataT>& input_pixel, ComputeT scalar) {
-		return {
-			static_cast<DataT> (input_pixel.R * scalar),
-			static_cast<DataT> (input_pixel.G * scalar),
-			static_cast<DataT> (input_pixel.B * scalar),
-			static_cast<DataT> (input_pixel.A)
-		};
+	return {
+		static_cast<DataT> (input_pixel.R * scalar),
+		static_cast<DataT> (input_pixel.G * scalar),
+		static_cast<DataT> (input_pixel.B * scalar),
+		static_cast<DataT> (input_pixel.A)
+	};
 }
 
 template<typename DataT>
 pixel<DataT> operator+(pixel<DataT>& p1, pixel<DataT> p2) {
-		return {
-			static_cast<DataT>(p1.R + p2.R),
-			static_cast<DataT>(p1.G + p2.G),
-			static_cast<DataT>(p1.B + p2.B),
-			static_cast<DataT>(p1.A)
-		};
+	return {
+		static_cast<DataT>(p1.R + p2.R),
+		static_cast<DataT>(p1.G + p2.G),
+		static_cast<DataT>(p1.B + p2.B),
+		static_cast<DataT>(p1.A)
+	};
 }

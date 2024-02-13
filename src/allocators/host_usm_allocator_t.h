@@ -11,4 +11,8 @@ public:
 	T* allocate(std::size_t n) override {
 		return sycl::malloc_host<T>(n, this->queue);
 	}
+
+	void* allocate_bytes(std::size_t n) override {
+		return sycl::malloc_host<T>(n, this->queue);
+	}
 };
