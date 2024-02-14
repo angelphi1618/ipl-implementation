@@ -16,6 +16,12 @@ struct filter_convolution_spec{
 
 	inline filter_convolution_spec(sycl::range<2> kernel_size, ComputeT* kernel_data, int x_anchor = 0, int y_anchor = 0) 
 							: kernel_size(kernel_size), kernel_data(kernel_data), x_anchor(x_anchor), y_anchor(y_anchor) {}
+
+	inline filter_convolution_spec(sycl::range<2> kernel_size, ComputeT* kernel_data) 
+							: kernel_size(kernel_size), kernel_data(kernel_data) {
+								this->x_anchor = (kernel_size.get(0) - 1) / 2;
+								this->y_anchor = (kernel_size.get(1) - 1) / 2;
+							}
 };
 
 template <typename ComputeT = float,
