@@ -57,6 +57,7 @@ int main() {
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagen, "images/lolitaDesdeFuera.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPika(Q, sycl::range(400,400), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> pikaAtrapada(Q, sycl::range(400,400), loca);
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorderRepl = generate_border(imagen, {52, 70}, border_types::repl);
@@ -99,12 +100,14 @@ int main() {
 	box_filter<float>(Q, imagen, lolitaEnLaCaja, box_spec, border_types::repl).wait();
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lolitaEnLaCaja, "images/lolitaEnLaAtrapadaaa.bmp");
 
-
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaOutput, "images/lenitaFiltrada.bmp");
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png(imagenPika);
 	png.loadImage("images/pika.png");
 
+	box_filter<float>(Q, imagenPika, pikaAtrapada, box_spec, border_types::repl).wait();
+
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(pikaAtrapada, "images/pikaAtrapadaEnLaCaja.png");
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagenConBorder = generate_border(imagenPika, {50, 20}, border_types::const_val, {0, 255, 0, 255});
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagenConBorder, "images/pikaConBorde.png");
 	roi_rect rectangulo(sycl::range<2>(200,200), sycl::range<2>(40,60));
@@ -116,6 +119,7 @@ int main() {
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye(Q, sycl::range(1242, 2088), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> yeAtrapada(Q, sycl::range(1242, 2088), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_filtrado(Q, sycl::range(1242, 2088), loca);
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png_ye(ye);
@@ -124,6 +128,8 @@ int main() {
 	std::cout << "ye cargado" << std::endl;
 
 	filter_convolution<float>(Q, ye, ye_filtrado, kernel_spec, border_types::repl).wait();
+	box_filter<float>(Q, ye, yeAtrapada, box_spec, border_types::repl).wait();
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(yeAtrapada, "images/yeAtrapadaaa.png");
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* ye_borde = generate_border(ye, {1000, 500}, border_types::repl, {255,0,0,255});

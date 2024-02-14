@@ -11,14 +11,6 @@ struct pixel{
 	inline pixel(DataT R, DataT G, DataT B, DataT A): R(R), G(G), B(B), A(A) {};
 	inline pixel(DataT R, DataT G, DataT B): R(R), G(G), B(B), A(255) {};
 	inline pixel(): R(0), G(0), B(0), A(255) {};
-
-	template<typename ComputeT>
-	pixel(const pixel<ComputeT>& other) : 
-		
-		R(static_cast<ComputeT> (other.R)),
-		G(static_cast<ComputeT> (other.G)),
-		B(static_cast<ComputeT> (other.B)),
-		A(static_cast<ComputeT> (other.A)) {}
 		
 	
 

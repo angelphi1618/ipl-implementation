@@ -79,7 +79,11 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 			int i_src_bordered = i_destino + kernel_height;
 			int j_src_bordered = j_destino + kernel_width;
 
-			pixel<ComputeT> suma(0, 0, 0, 255);
+			pixel<DataT> suma(0, 0, 0, 255);
+            ComputeT R = 0;
+            ComputeT G = 0;            
+            ComputeT B = 0;
+            ComputeT A = 0;
 
 			for (int ii = 0; ii < kernel_height; ii++)
 			{
@@ -88,13 +92,16 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 					int ii_src_bordered = ii + i_src_bordered - y_anchor;
 					int jj_src_bordered = jj + j_src_bordered - x_anchor;
 
-					suma = suma + (src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)] * alpha);
+                    R += src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].R * alpha;
+                    G += src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].G * alpha;
+                    B += src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].B * alpha;
+                    A += src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].A * alpha;
 				}
 			}
 
-			dst_data[i_destino * dst_width + j_destino] =  (DataT)suma;
+			dst_data[i_destino * dst_width + j_destino] = {(DataT) R, (DataT) G, (DataT) B, (DataT)A };
 
-			os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;
+			//os << "sumaR = " << R << ", sumaG = " << G << ", sumaB = " << B << sycl::endl;
 		});
 	});
     
