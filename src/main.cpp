@@ -17,7 +17,7 @@
 int main() {
 
 	sycl::device dev;
-	dev = sycl::device(sycl::gpu_selector());
+	dev = sycl::device(sycl::cpu_selector());
 	sycl::queue Q(dev);
 
 	device_usm_allocator_t<pixel<uint8_t>> loca(Q);
@@ -44,28 +44,28 @@ int main() {
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderLena(imagenLena);
 
 
-	imageloader.loadImage("lolita.bmp");
-	imageloaderLena.loadImage("prueba.bmp");
+	imageloader.loadImage("images/lolita.bmp");
+	imageloaderLena.loadImage("images/prueba.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorder = generate_border(imagen, {52, 70}, border_types::const_val, {0, 0, 255, 255});
-	imageloader.saveImage("lolitaLocal.bmp");
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lolitaBorder, "lolitaConBorde.bmp");
-	imageloader.saveImage("lolita2.bmp");
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagen, "lolitaDesdeFuera.bmp");
+	imageloader.saveImage("images/lolitaLocal.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lolitaBorder, "images/lolitaConBorde.bmp");
+	imageloader.saveImage("images/lolita2.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagen, "images/lolitaDesdeFuera.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPika(Q, sycl::range(400,400), loca);
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorderRepl = generate_border(imagen, {52, 70}, border_types::repl);
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lolitaBorderRepl, "lolitaConBordeRepl.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lolitaBorderRepl, "images/lolitaConBordeRepl.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lenitaBorderRepl = generate_border(imagenLena, {100, 50}, border_types::repl);
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lenitaBorderRepl, "lenita.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lenitaBorderRepl, "images/lenita.bmp");
 
-	std::vector<float> kernel2{0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.25f,
+	std::vector<float> kernel2{1.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.00f,
 							   0.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.00f,
 							   0.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.00f,
-							   0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.25f};
+							   0.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.00f};
 
 	// std::vector<float> kernel2{ 1,  4,  7,  4, 1,
 	// 							4, 20, 33, 20, 4,
@@ -83,27 +83,27 @@ int main() {
 
 	Q.memcpy(kernel, kernel1.data(), kernel1.size() * sizeof(float));
 
-	filter_convolution_spec<float> kernel_spec({9 ,4}, kernel2.data());
+	filter_convolution_spec<float> kernel_spec({9 ,4}, kernel2.data(), 8, 3);
 
 	
 
 	std::cout << "filtrado convolucion " << std::endl;
-	filter_convolution<float>(Q, imagenLena, imagenLenaOutput, kernel_spec, border_types::repl);
+	filter_convolution<float>(Q, imagenLena, imagenLenaOutput, kernel_spec, border_types::repl).wait();
 	std::cout << "filtrado convolucion ok" << std::endl;
 
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaOutput, "lenitaFiltrada.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaOutput, "images/lenitaFiltrada.bmp");
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png(imagenPika);
-	png.loadImage("pika.png");
+	png.loadImage("images/pika.png");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagenConBorder = generate_border(imagenPika, {50, 20}, border_types::const_val, {0, 255, 0, 255});
-	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagenConBorder, "pikaConBorde.png");
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagenConBorder, "images/pikaConBorde.png");
 	roi_rect rectangulo(sycl::range<2>(200,200), sycl::range<2>(40,60));
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagenPikaRecortada = imagenPika.get_roi(rectangulo);
 
-	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagenPikaRecortada, "pikaRecortada.png");
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagenPikaRecortada, "images/pikaRecortada.png");
 
-	png.saveImage("pika3.png");
+	png.saveImage("images/pika3.png");
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye(Q, sycl::range(1242, 2088), loca);
@@ -111,15 +111,15 @@ int main() {
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png_ye(ye);
 
-	png_ye.loadImage("ye.png");
+	png_ye.loadImage("images/ye.png");
 	std::cout << "ye cargado" << std::endl;
 
-	filter_convolution<float>(Q, ye, ye_filtrado, kernel_spec, border_types::repl);
+	filter_convolution<float>(Q, ye, ye_filtrado, kernel_spec, border_types::repl).wait();
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* ye_borde = generate_border(ye, {1000, 500}, border_types::repl, {255,0,0,255});
-	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*ye_borde, "yeborde.png");
-	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(ye_filtrado, "yefiltrado.png");
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*ye_borde, "images/yeborde.png");
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(ye_filtrado, "images/yefiltrado.png");
 
 
 

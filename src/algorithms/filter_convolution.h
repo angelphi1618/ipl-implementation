@@ -11,8 +11,11 @@ template <typename ComputeT = float>
 struct filter_convolution_spec{
 	sycl::range<2> kernel_size;
 	ComputeT* kernel_data;
+	int x_anchor = 0;
+	int y_anchor = 0;
 
-	inline filter_convolution_spec(sycl::range<2> kernel_size, ComputeT* kernel_data) : kernel_size(kernel_size), kernel_data(kernel_data) {}
+	inline filter_convolution_spec(sycl::range<2> kernel_size, ComputeT* kernel_data, int x_anchor = 0, int y_anchor = 0) 
+							: kernel_size(kernel_size), kernel_data(kernel_data), x_anchor(x_anchor), y_anchor(y_anchor) {}
 };
 
 template <typename ComputeT = float,
@@ -53,6 +56,8 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 
 		std::cout << "lanzando parallel for" << std::endl;
 		// Tamaño de la imagen destino
+		int x_anchor = kernel.x_anchor;
+		int y_anchor = kernel.y_anchor;
 		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
 			// os << "dentro del kernel" << sycl::endl;
 
@@ -70,8 +75,8 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 			{
 				for (int jj = 0; jj < kernel_width; jj++)
 				{
-					int ii_src_bordered = ii + i_src_bordered;
-					int jj_src_bordered = jj + j_src_bordered;
+					int ii_src_bordered = ii + i_src_bordered - y_anchor;
+					int jj_src_bordered = jj + j_src_bordered - x_anchor;
 
 					suma = suma + (src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)] * kernel_data[ii * kernel_width + jj]);
 				}
