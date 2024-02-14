@@ -5,8 +5,9 @@
 #include "../image.h"
 #include "../border_generator/border_types.h"
 #include "../border_generator/border_generator.h"
+#include "../exceptions/unimplemented.h"
 
-
+//TODO: verificar que solo se puedan usar los bordes que se especifican
 template <typename ComputeT = float>
 struct filter_convolution_spec{
 	sycl::range<2> kernel_size;
@@ -31,6 +32,16 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 						border_types border_type = border_types::default_val,
 						pixel<DataT> default_value = {},
 						const std::vector<sycl::event>& dependencies = {}) {
+
+	switch (border_type)
+	{	
+	case border_types::const_val:
+	case border_types::repl:
+		break;
+	
+	default:
+		throw unimplemented("Tipo de no soportado");
+	}
 	
 
 	image<DataT, AllocatorT>* bordered_image = generate_border(src, kernel.kernel_size, border_type, default_value);

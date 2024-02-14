@@ -13,6 +13,7 @@
 
 #include "algorithms/grayscale.h"
 #include "algorithms/filter_convolution.h"
+#include "algorithms/box_filter.h"
 
 int main() {
 
@@ -38,6 +39,8 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLena(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutput(Q, sycl::range(512, 512), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutputBox(Q, sycl::range(512, 512), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaEnLaCaja(Q, sycl::range(1200, 900), loca);
 
 
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
@@ -90,6 +93,12 @@ int main() {
 	std::cout << "filtrado convolucion " << std::endl;
 	filter_convolution<float>(Q, imagenLena, imagenLenaOutput, kernel_spec, border_types::repl).wait();
 	std::cout << "filtrado convolucion ok" << std::endl;
+
+	box_filter_spec box_spec({30, 30});
+
+	box_filter<float>(Q, imagen, lolitaEnLaCaja, box_spec, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lolitaEnLaCaja, "images/lolitaEnLaAtrapadaaa.bmp");
+
 
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaOutput, "images/lenitaFiltrada.bmp");
 
