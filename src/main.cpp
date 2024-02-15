@@ -41,6 +41,7 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutput(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutputBox(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaEnLaCaja(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGaussiana(Q, sycl::range(1200, 900), loca);
 
 
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
@@ -121,6 +122,7 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye(Q, sycl::range(1242, 2088), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> yeAtrapada(Q, sycl::range(1242, 2088), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_filtrado(Q, sycl::range(1242, 2088), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_gaussiano(Q, sycl::range(1242, 2088), loca);
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png_ye(ye);
 
@@ -138,6 +140,10 @@ int main() {
 
 
 
+	gaussian_filter_spec<double> gaussian_spec(1000, 300, 300);
+	gaussian_filter<double>(Q, imagen, lolitaGaussiana, gaussian_spec, border_types::const_val, {255,128,0,255}).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(lolitaGaussiana, "images/gauss/ye_gaussiano.bmp");
+	std::cout << "--------------------------------------------" << std::endl;
 	
 
 

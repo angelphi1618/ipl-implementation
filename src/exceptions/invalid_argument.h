@@ -1,3 +1,4 @@
+#pragma once
 #include <exception>
 
 class invalid_argument : public std::exception {

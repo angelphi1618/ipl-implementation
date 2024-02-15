@@ -1,3 +1,4 @@
+#pragma once
 #include <exception>
 
 class unimplemented : public std::exception {

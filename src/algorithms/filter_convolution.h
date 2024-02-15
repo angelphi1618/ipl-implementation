@@ -15,7 +15,7 @@ struct filter_convolution_spec{
 	int x_anchor = 0;
 	int y_anchor = 0;
 
-	inline filter_convolution_spec(sycl::range<2> kernel_size, ComputeT* kernel_data, int x_anchor = 0, int y_anchor = 0) 
+	inline filter_convolution_spec(sycl::range<2> kernel_size, ComputeT* kernel_data, int x_anchor, int y_anchor) 
 							: kernel_size(kernel_size), kernel_data(kernel_data), x_anchor(x_anchor), y_anchor(y_anchor) {}
 
 	inline filter_convolution_spec(sycl::range<2> kernel_size, ComputeT* kernel_data) 
@@ -88,6 +88,11 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 
 			pixel<DataT> suma(0, 0, 0, 255);
 
+			ComputeT R = 0;
+            ComputeT G = 0;            
+            ComputeT B = 0;
+            ComputeT A = 0;
+
 			for (int ii = 0; ii < kernel_height; ii++)
 			{
 				for (int jj = 0; jj < kernel_width; jj++)
@@ -95,11 +100,19 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 					int ii_src_bordered = ii + i_src_bordered - y_anchor;
 					int jj_src_bordered = jj + j_src_bordered - x_anchor;
 
-					suma = suma + (src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)] * kernel_data[ii * kernel_width + jj]);
+					R = R + ((ComputeT)src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].R * kernel_data[ii * kernel_width + jj]);
+					G = G + ((ComputeT)src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].G * kernel_data[ii * kernel_width + jj]);
+					B = B + ((ComputeT)src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].B * kernel_data[ii * kernel_width + jj]);
+					A = A + ((ComputeT)src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].A * kernel_data[ii * kernel_width + jj]);
 				}
 			}
 
-			dst_data[i_destino * dst_width + j_destino] = suma;
+			dst_data[i_destino * dst_width + j_destino] = {
+				(DataT) R,
+				(DataT) G,
+				(DataT) B,
+				(DataT) A,
+			};
 
 			// os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;
 		});
