@@ -13,6 +13,9 @@ struct pixel{
 	inline pixel(): R(0), G(0), B(0), A(255) {};
 		
 	
+	bool operator<(const pixel<DataT>& other) const {
+		return 0.299 * R + 0.587 * G + 0.114 * B < 0.299 * other.R + 0.587 * other.G + other.B;;
+	}
 
 };
 
@@ -35,3 +38,5 @@ pixel<DataT> operator+(pixel<DataT>& p1, pixel<DataT> p2) {
 		static_cast<DataT>(p1.A)
 	};
 }
+
+

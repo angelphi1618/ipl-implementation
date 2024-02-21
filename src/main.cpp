@@ -14,6 +14,8 @@
 #include "algorithms/grayscale.h"
 #include "algorithms/filter_convolution.h"
 #include "algorithms/box_filter.h"
+#include "algorithms/gaussian_filter.h"
+#include "algorithms/median_filter.h"
 
 int main() {
 
@@ -43,6 +45,10 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaEnLaCaja(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGaussiana(Q, sycl::range(1200, 900), loca);
 
+	median_spec median = {5};
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaMediana(Q, sycl::range(512, 512), loca);
+
+
 
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderLena(imagenLena);
@@ -50,6 +56,9 @@ int main() {
 
 	imageloader.loadImage("images/lolita.bmp");
 	imageloaderLena.loadImage("images/prueba.bmp");
+
+	median_filter(Q, imagenLena, imagenLenaMediana, median).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaMediana, "images/lenaMediana.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorder = generate_border(imagen, {52, 70}, border_types::const_val, {0, 0, 255, 255});
 	imageloader.saveImage("images/lolitaLocal.bmp");
