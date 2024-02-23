@@ -15,7 +15,8 @@
 #include "algorithms/filter_convolution.h"
 #include "algorithms/box_filter.h"
 #include "algorithms/gaussian_filter.h"
-#include "algorithms/median_filter.h"
+
+#include "algorithms/sobel_filter.h"
 
 int main() {
 
@@ -41,12 +42,18 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLena(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutput(Q, sycl::range(512, 512), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaGris(Q, sycl::range(512, 512), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaSobel(Q, sycl::range(512, 512), loca);
+
+
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutputBox(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaEnLaCaja(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGaussiana(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGris(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaSobel(Q, sycl::range(1200, 900), loca);
 
-	median_spec median = {5};
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaMediana(Q, sycl::range(512, 512), loca);
+	//median_spec median = {5};
+	//image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaMediana(Q, sycl::range(512, 512), loca);
 
 
 
@@ -57,8 +64,10 @@ int main() {
 	imageloader.loadImage("images/lolita.bmp");
 	imageloaderLena.loadImage("images/prueba.bmp");
 
-	median_filter(Q, imagenLena, imagenLenaMediana, median).wait();
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaMediana, "images/lenaMediana.bmp");
+	//auto aaa = median_filter(Q, imagenLena, imagenLenaMediana, median);
+
+	//aaa.wait();
+	//bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaMediana, "images/lenaMediana.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorder = generate_border(imagen, {52, 70}, border_types::const_val, {0, 0, 255, 255});
 	imageloader.saveImage("images/lolitaLocal.bmp");
@@ -67,6 +76,11 @@ int main() {
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagen, "images/lolitaDesdeFuera.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPika(Q, sycl::range(400,400), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaGauss(Q, sycl::range(400,400), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaGris(Q, sycl::range(400,400), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaSobel(Q, sycl::range(400,400), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaSobelProcesada(Q, sycl::range(400,400), loca);
+
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> pikaAtrapada(Q, sycl::range(400,400), loca);
 
 
@@ -128,12 +142,16 @@ int main() {
 	png.saveImage("images/pika3.png");
 
 
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye(Q, sycl::range(1242, 2088), loca);
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> yeAtrapada(Q, sycl::range(1242, 2088), loca);
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_filtrado(Q, sycl::range(1242, 2088), loca);
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_gaussiano(Q, sycl::range(1242, 2088), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye(Q, sycl::range(1222, 2088), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> yeGris(Q, sycl::range(1222, 2088), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> yeSobel(Q, sycl::range(1222, 2088), loca);
+
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> yeAtrapada(Q, sycl::range(1222, 2088), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_filtrado(Q, sycl::range(1222, 2088), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_gaussiano(Q, sycl::range(1222, 2088), loca);
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png_ye(ye);
+
 
 	png_ye.loadImage("images/ye.png");
 	std::cout << "ye cargado" << std::endl;
@@ -149,12 +167,38 @@ int main() {
 
 
 
-	gaussian_filter_spec<double> gaussian_spec(1000, 300, 300);
+	gaussian_filter_spec<double> gaussian_spec(10, 1.4, 1.4);
 	gaussian_filter<double>(Q, imagen, lolitaGaussiana, gaussian_spec, border_types::const_val, {255,128,0,255}).wait();
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(lolitaGaussiana, "images/gauss/ye_gaussiano.bmp");
 	std::cout << "--------------------------------------------" << std::endl;
 	
 
+	std::cout << "sobel" << std::endl;
+
+	gaussian_filter<double>(Q, ye, ye_gaussiano, gaussian_spec, border_types::repl).wait();
+	rgb_to_gray(Q, ye_gaussiano, yeGris).wait();
+	sobel_filter(Q, yeGris, yeSobel, {3}, border_types::repl).wait();
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(yeSobel, "images/gauss/yeSobel.png");
+	std::cout << "--------------------------------------------" << std::endl;
+
+
+	std::cout << "sobel" << std::endl;
+
+	gaussian_filter<double>(Q, imagenPika, imagenPikaGauss, gaussian_spec, border_types::repl).wait();
+	rgb_to_gray(Q, imagenPikaGauss, imagenPikaGris).wait();
+	sobel_filter(Q, imagenPikaGris, imagenPikaSobel, {3}, border_types::repl).wait();
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenPikaGris, "images/gauss/pikaGris.png");
+
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenPikaSobel, "images/gauss/pikaSobel.png");
+	std::cout << "--------------------------------------------" << std::endl;
+
+	std::cout << "sobel" << std::endl;
+
+	gaussian_filter<double>(Q, imagen, lolitaGaussiana, gaussian_spec, border_types::repl).wait();
+	rgb_to_gray(Q, lolitaGaussiana, lolitaGris).wait();
+	sobel_filter(Q, lolitaGris, lolitaSobel, {3}, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(lolitaSobel, "images/gauss/lolitaSobel.bmp");
+	std::cout << "--------------------------------------------" << std::endl;
 
 
 	/*

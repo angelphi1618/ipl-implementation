@@ -21,6 +21,7 @@ sycl::event rgb_to_gray(sycl::queue& q, image<DataT, AllocatorT>& src, image<Dat
 			image_dst[i].R = gris;
 			image_dst[i].G = gris;
 			image_dst[i].B = gris;
+			image_dst[i].A = image_src[i].A;
 		});
 	});
 }

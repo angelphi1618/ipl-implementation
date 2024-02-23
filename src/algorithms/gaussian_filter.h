@@ -34,7 +34,7 @@ sycl::event gaussian_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image
     case border_types::mirror:
 		break;
 	default:
-		throw unimplemented("Tipo de no soportado");
+		throw unimplemented("Tipo de borde no soportado");
 	}
 
 	// El kernel es cuadrado

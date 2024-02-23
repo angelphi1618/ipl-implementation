@@ -40,7 +40,7 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 		break;
 	
 	default:
-		throw unimplemented("Tipo de no soportado");
+		throw unimplemented("Tipo de borde no soportado");
 	}
 	
 

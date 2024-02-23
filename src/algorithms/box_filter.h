@@ -36,7 +36,7 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 		break;
 	
 	default:
-		throw unimplemented("Tipo de no soportado");
+		throw unimplemented("Tipo de borde no soportado");
 	}
 
     image<DataT, AllocatorT>* bordered_image = generate_border(src, kernel.kernel_size, border_type, default_value);
