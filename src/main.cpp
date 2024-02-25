@@ -15,6 +15,7 @@
 #include "algorithms/filter_convolution.h"
 #include "algorithms/box_filter.h"
 #include "algorithms/gaussian_filter.h"
+#include "algorithms/separable_filter.h"
 
 #include "algorithms/sobel_filter.h"
 
@@ -41,6 +42,7 @@ int main() {
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLena(Q, sycl::range(512, 512), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lenaSeparada(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutput(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaGris(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaSobel(Q, sycl::range(512, 512), loca);
@@ -81,6 +83,14 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaSobel(Q, sycl::range(400,400), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaSobelProcesada(Q, sycl::range(400,400), loca);
 
+	std::vector<int> ptr_x = {1, 2, 1};
+	std::vector<int> ptr_y = {1, 0, -1};
+	separable_spec<int> separada = {{3,3}, ptr_x.data() , ptr_y.data()};
+	separable_filter(Q, imagenLena, lenaSeparada, separada, border_types::repl).wait();
+	std::cout << "Despues del 2 parallel" << std::endl;
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lenaSeparada, "images/lenaseparada.bmp");
+
+
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> pikaAtrapada(Q, sycl::range(400,400), loca);
 
 
@@ -90,10 +100,11 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lenitaBorderRepl = generate_border(imagenLena, {100, 50}, border_types::repl);
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lenitaBorderRepl, "images/lenita.bmp");
 
-	std::vector<float> kernel2{1.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.00f,
-							   0.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.00f,
-							   0.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.00f,
-							   0.00f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.00f};
+	std::vector<int> kernel2{1, 0 -1,
+							   2, 0, -2,
+							   1, 0, -1};
+
+	
 
 	// std::vector<float> kernel2{ 1,  4,  7,  4, 1,
 	// 							4, 20, 33, 20, 4,
@@ -111,12 +122,12 @@ int main() {
 
 	Q.memcpy(kernel, kernel1.data(), kernel1.size() * sizeof(float));
 
-	filter_convolution_spec<float> kernel_spec({9 ,4}, kernel2.data(), 8, 3);
+	filter_convolution_spec<int> kernel_spec({3 ,3}, kernel2.data(),1, 1);
 
 	
 
 	std::cout << "filtrado convolucion " << std::endl;
-	filter_convolution<float>(Q, imagenLena, imagenLenaOutput, kernel_spec, border_types::repl).wait();
+	filter_convolution<int>(Q, imagenLena, imagenLenaOutput, kernel_spec, border_types::repl).wait();
 	std::cout << "filtrado convolucion ok" << std::endl;
 
 	box_filter_spec box_spec({30, 30});
@@ -156,7 +167,7 @@ int main() {
 	png_ye.loadImage("images/ye.png");
 	std::cout << "ye cargado" << std::endl;
 
-	filter_convolution<float>(Q, ye, ye_filtrado, kernel_spec, border_types::repl).wait();
+	//filter_convolution<float>(Q, ye, ye_filtrado, kernel_spec, border_types::repl).wait();
 	box_filter<float>(Q, ye, yeAtrapada, box_spec, border_types::repl).wait();
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(yeAtrapada, "images/yeAtrapadaaa.png");
 
