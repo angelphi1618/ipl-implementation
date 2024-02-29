@@ -16,6 +16,7 @@
 #include "algorithms/box_filter.h"
 #include "algorithms/gaussian_filter.h"
 #include "algorithms/separable_filter.h"
+#include "algorithms/bilateral_filter.h"
 
 #include "algorithms/sobel_filter.h"
 
@@ -46,6 +47,7 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutput(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaGris(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaSobel(Q, sycl::range(512, 512), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaBilateral(Q, sycl::range(512, 512), loca);
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutputBox(Q, sycl::range(512, 512), loca);
@@ -53,6 +55,7 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGaussiana(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGris(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaSobel(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaBilateral(Q, sycl::range(1200, 900), loca);
 
 	//median_spec median = {5};
 	//image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaMediana(Q, sycl::range(512, 512), loca);
@@ -83,9 +86,9 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaSobel(Q, sycl::range(400,400), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaSobelProcesada(Q, sycl::range(400,400), loca);
 
-	std::vector<int> ptr_y = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,};
-	std::vector<int> ptr_x = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,};
-	separable_spec<int> separada = {{20, 20}, ptr_x.data() , ptr_y.data()};
+	std::vector<int> ptr_y = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,};
+	std::vector<int> ptr_x = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,};
+	separable_spec<int> separada = {{240, 240}, ptr_x.data() , ptr_y.data()};
 	separable_filter(Q, imagenLena, lenaSeparada, separada, border_types::repl).wait();
 	std::cout << "Despues del 2 parallel" << std::endl;
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lenaSeparada, "images/lenaseparada.bmp");
@@ -160,6 +163,7 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> yeAtrapada(Q, sycl::range(1222, 2088), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_filtrado(Q, sycl::range(1222, 2088), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_gaussiano(Q, sycl::range(1222, 2088), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ye_bilateral(Q, sycl::range(1222, 2088), loca);
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> png_ye(ye);
 
@@ -167,9 +171,24 @@ int main() {
 	png_ye.loadImage("images/ye.png");
 	std::cout << "ye cargado" << std::endl;
 
+
+	bilateral_filter_spec<double> b_filter_spec(9, 75, 75);
+	bilateral_filter<double>(Q, ye, ye_bilateral, b_filter_spec, border_types::repl).wait();
+	
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(ye_bilateral, "images/yeBilateral.png");
+
+	bilateral_filter<double>(Q, imagen, lolitaBilateral, b_filter_spec, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lolitaBilateral, "images/lolitaBilateral.bmp");
+
+	bilateral_filter<double>(Q, imagenLena, imagenLenaBilateral, b_filter_spec, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaBilateral, "images/imagenLenaBilateral.bmp");
+
+
 	//filter_convolution<float>(Q, ye, ye_filtrado, kernel_spec, border_types::repl).wait();
 	box_filter<float>(Q, ye, yeAtrapada, box_spec, border_types::repl).wait();
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(yeAtrapada, "images/yeAtrapadaaa.png");
+
+	
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* ye_borde = generate_border(ye, {1000, 500}, border_types::repl, {255,0,0,255});
@@ -178,7 +197,7 @@ int main() {
 
 
 
-	gaussian_filter_spec<double> gaussian_spec(10, 1.4, 1.4);
+	gaussian_filter_spec<double> gaussian_spec(9, 75, 75);
 	gaussian_filter<double>(Q, imagen, lolitaGaussiana, gaussian_spec, border_types::const_val, {255,128,0,255}).wait();
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(lolitaGaussiana, "images/gauss/ye_gaussiano.bmp");
 	std::cout << "--------------------------------------------" << std::endl;
