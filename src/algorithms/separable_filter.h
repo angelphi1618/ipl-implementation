@@ -16,9 +16,6 @@ struct separable_spec
     ComputeT* kernel_y_ptr;
 };
 
-
-
-
 template <typename ComputeT = int,
 		typename DataT, typename AllocatorT>
 sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
@@ -67,8 +64,8 @@ sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 
 
 
+		// Row
         cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
-
 
             ComputeT R = 0;     
             ComputeT G = 0;                 
@@ -78,24 +75,25 @@ sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
             int i_dst = item.get(1);
             int j_dst = item.get(0);
             
-            int i = item.get(1) + kernel.window.get(0);
+            int j_bordered = item.get(0) + kernel.window.get(0);
+			int i_bordered = i_dst + kernel.window.get(1);
 
             for (int j = 0; j < kernel.window.get(1); j++)
             {
-                int j_bordered = item.get(0) + j + 3 - anchor_x;
+                int jj_bordered = j + j_bordered - anchor_x;
 
-                R = R + ((ComputeT)src_data[i * bordered_width + (j_bordered)].R * kernel_x[j]);
-                G = G + ((ComputeT)src_data[i * bordered_width + (j_bordered)].G * kernel_x[j]);
-                B = B + ((ComputeT)src_data[i * bordered_width + (j_bordered)].B * kernel_x[j]);
-                A = A + ((ComputeT)src_data[i * bordered_width + (j_bordered)].A * kernel_x[j]);
+                R = R + ((ComputeT)src_data[i_bordered * bordered_width + (jj_bordered)].R * kernel_x[j]);
+                G = G + ((ComputeT)src_data[i_bordered * bordered_width + (jj_bordered)].G * kernel_x[j]);
+                B = B + ((ComputeT)src_data[i_bordered * bordered_width + (jj_bordered)].B * kernel_x[j]);
+                A = A + ((ComputeT)src_data[i_bordered * bordered_width + (jj_bordered)].A * kernel_x[j]);
             }
 
-            R /= 3;
-            G /= 3;
-            B /= 3;
-            A /= 3;
+            R /= kernel.window.get(1);
+            G /= kernel.window.get(1);
+            B /= kernel.window.get(1);
+            A /= kernel.window.get(1);
             
-            intermediate_data[( i_dst + 3) * inter_width + j_dst + 3] = {
+            intermediate_data[(i_dst + kernel.window.get(0)) * inter_width + j_dst + kernel.window.get(1)] = {
 				(DataT) R,
 				(DataT) G,
 				(DataT) B,
@@ -109,8 +107,6 @@ sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 
     }).wait();
 
-
-    bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*intermediate, "images/lenaseparadaIntermedia.bmp");
 
     std::cout << "Despues del 1 parallel" << std::endl;
 
@@ -127,7 +123,7 @@ sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
             int i_dst = item.get(1);
             int j_dst = item.get(0);
 
-            int j = item.get(0) + 3;
+            int j = item.get(0) + kernel.window.get(1);
 
             
 
@@ -141,10 +137,10 @@ sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
                 A = A + ((ComputeT)intermediate_data[i_bordered * bordered_width + (j)].A * kernel_y[i]);
             }
 
-            R /= 3;
-            G /= 3;
-            B /= 3;
-            A /= 3;
+            R /= kernel.window.get(0);
+            G /= kernel.window.get(0);
+            B /= kernel.window.get(0);
+            A /= kernel.window.get(0);
 
             
             

@@ -83,9 +83,9 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaSobel(Q, sycl::range(400,400), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaSobelProcesada(Q, sycl::range(400,400), loca);
 
-	std::vector<int> ptr_x = {1, 2, 1};
-	std::vector<int> ptr_y = {1, 0, -1};
-	separable_spec<int> separada = {{3,3}, ptr_x.data() , ptr_y.data()};
+	std::vector<int> ptr_y = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,};
+	std::vector<int> ptr_x = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,};
+	separable_spec<int> separada = {{20, 20}, ptr_x.data() , ptr_y.data()};
 	separable_filter(Q, imagenLena, lenaSeparada, separada, border_types::repl).wait();
 	std::cout << "Despues del 2 parallel" << std::endl;
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lenaSeparada, "images/lenaseparada.bmp");
