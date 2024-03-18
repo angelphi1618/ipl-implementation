@@ -13,21 +13,13 @@ void buble_sort(pixel<DataT> array[], int size) {
     int i, j;
 	pixel<DataT> tmp;
 
-    pixel<DataT>* p = array + 12 * sizeof(pixel<DataT>);
-
 	for (i=1; i<size; i++)
 		for (j=0 ; j<size - i; j++)
-			if (array[j] > array[j+1]){
-				tmp = {array[j].R, array[j].G, array[j].B, array[j].A};
+			if (array[j].value() > array[j+1].value()){
+				tmp = array[j];
 				array[j] = array[j+1];
-				array[j+1] = {tmp.R, tmp.G, tmp.B, tmp.A};
+				array[j+1] = tmp;
 			}
-
-    for (int i = 0; i < size * size; i++)
-    {
-        /* code */
-    }
-    
 }
 
 
@@ -91,23 +83,34 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 					int ii_src_bordered = ii + i_src_bordered - anchor;
 					int jj_src_bordered = jj + j_src_bordered - anchor;
 
-                    window[ii * MAX_WINDOW + jj] = src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)];
+					window[ii * MAX_WINDOW + jj] = src_data[ii_src_bordered * src_bordered_width + jj_src_bordered];
 				}
 			}
 
             buble_sort(window, MAX_WINDOW);
-			pixel<DataT> currentPixel = src_data[(i_src_bordered -anchor ) * src_bordered_width + (j_src_bordered - anchor)];
-			pixel<DataT> median = window[MAX_WINDOW/2];
-			double medianValue = 0.299 * median.R + 0.587 * median.G + 0.114 * median.B + 0.1;
-			double pixelValue =  0.299 * currentPixel.R + 0.587 * currentPixel.G + 0.114 * currentPixel.B + 0.1;
+			pixel<DataT> currentPixel = src_data[(i_src_bordered) * src_bordered_width + (j_src_bordered)];
+			pixel<DataT> median = window[(anchor * anchor - 1)/2];
+			double medianValue = median.value();
+			double pixelValue =  currentPixel.value();
 
-			os << "mediana: " << (int) medianValue << "; pixel: " << (int) pixelValue << sycl::endl;
+			if (currentPixel.value() < 0.2){
+				os << "pixel negro(" << median.R << ", " << median.G << ", " << median.B << ")"<< sycl::endl;
+			}
 
-			if (fabsf((medianValue - pixelValue) / medianValue) <= -1)
-				dst_data[i_destino * dst_width + j_destino] = src_data[(i_src_bordered) * src_bordered_width + (j_src_bordered - anchor)];
-			else
-				dst_data[i_destino * dst_width + j_destino] = median;
+			if (median.value() < 0.2){
+				os << "mediana negra(" << median.R << ", " << median.G << ", " << median.B << ")"<< sycl::endl;
+			}
 
+			pixel<DataT> green(0, 255, 0, 255);
+			//os << "mediana: " << (int) medianValue << "; pixel: " << (int) pixelValue << sycl::endl;
+
+			dst_data[i_destino * dst_width + j_destino] = median;
+
+			// if (fabs((median.value() - currentPixel.value()) / median.value()) <= 0.2) {
+			// 	dst_data[i_destino * dst_width + j_destino] = currentPixel;
+			// }else {
+			// 	dst_data[i_destino * dst_width + j_destino] = median;
+			// }
 			//dst_data[i_destino * dst_width + j_destino] = window[MAX_WINDOW * MAX_WINDOW / 2];
 
 			// os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;

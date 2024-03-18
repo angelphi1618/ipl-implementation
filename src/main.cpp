@@ -24,7 +24,7 @@
 int main() {
 
 	sycl::device dev;
-	dev = sycl::device(sycl::cpu_selector());
+	dev = sycl::device(sycl::gpu_selector());
 	sycl::queue Q(dev);
 
 	device_usm_allocator_t<pixel<uint8_t>> loca(Q);
@@ -76,11 +76,11 @@ int main() {
 	imageloaderLena.loadImage("images/prueba.bmp");
 	imageloaderLenaRecortada.loadImage("images/lenaRecortada.bmp");
 
-	median_filter(Q, lenaRecortada, lenaRecortadaGuadada).wait();
+	median_filter(Q, imagenLena, imagenLenaMediana).wait();
 
 	//aaa.wait();
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lenaRecortadaGuadada, "images/lenaMediana.bmp");
-
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaMediana, "images/lenaMediana.bmp");
+return;
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorder = generate_border(imagen, {52, 70}, border_types::const_val, {0, 0, 255, 255});
 	imageloader.saveImage("images/lolitaLocal.bmp");
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lolitaBorder, "images/lolitaConBorde.bmp");
