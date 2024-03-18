@@ -76,7 +76,7 @@ int main() {
 	imageloaderLena.loadImage("images/prueba.bmp");
 	imageloaderLenaRecortada.loadImage("images/lenaRecortada.bmp");
 
-	median_filter(Q, imagenLena, imagenLenaMediana).wait();
+	median_filter(Q, imagenLena, imagenLenaMediana, {5}).wait();
 
 	//aaa.wait();
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaMediana, "images/lenaMediana.bmp");

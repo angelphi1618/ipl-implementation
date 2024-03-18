@@ -22,9 +22,13 @@ void buble_sort(pixel<DataT> array[], int size) {
 			}
 }
 
+struct median_spec{
+	unsigned int window_size;
+};
 
 template <typename DataT, typename AllocatorT>
 sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
+						const median_spec& spec,
 						border_types border_type = border_types::repl,
 						pixel<DataT> default_value = {},
 						const std::vector<sycl::event>& dependencies = {}) {
@@ -39,8 +43,10 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 		throw unimplemented("Tipo de no soportado");
 	}
 	
+	if (spec.window_size > MAX_WINDOW)
+		throw invalid_argument("Tamaño de ventana no permitido. Máx. 5.");
 
-	image<DataT, AllocatorT>* bordered_image = generate_border<DataT, AllocatorT>(src, sycl::range<2>(MAX_WINDOW, MAX_WINDOW), border_type, default_value);
+	image<DataT, AllocatorT>* bordered_image = generate_border<DataT, AllocatorT>(src, sycl::range<2>(spec.window_size, spec.window_size), border_type, default_value);
 
 
 	return q.submit([&](sycl::handler& cgh) {
@@ -62,7 +68,7 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 		sycl::stream os(1024*1024, 1024, cgh);
 
 		std::cout << "lanzando parallel for" << std::endl;
-        int anchor = (MAX_WINDOW - 1) / 2;
+        int anchor = (spec.window_size - 1) / 2;
 		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
 			// os << "dentro del kernel" << sycl::endl;
 
@@ -73,23 +79,23 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
 
-			int i_src_bordered = i_destino + MAX_WINDOW;
-			int j_src_bordered = j_destino + MAX_WINDOW;
+			int i_src_bordered = i_destino + spec.window_size;
+			int j_src_bordered = j_destino + spec.window_size;
 
-			for (int ii = 0; ii < MAX_WINDOW; ii++)
+			for (int ii = 0; ii < spec.window_size; ii++)
 			{
-				for (int jj = 0; jj < MAX_WINDOW; jj++)
+				for (int jj = 0; jj < spec.window_size; jj++)
 				{
 					int ii_src_bordered = ii + i_src_bordered - anchor;
 					int jj_src_bordered = jj + j_src_bordered - anchor;
 
-					window[ii * MAX_WINDOW + jj] = src_data[ii_src_bordered * src_bordered_width + jj_src_bordered];
+					window[ii * spec.window_size + jj] = src_data[ii_src_bordered * src_bordered_width + jj_src_bordered];
 				}
 			}
 
-            buble_sort(window, MAX_WINDOW);
+            buble_sort(window, spec.window_size*spec.window_size);
 			pixel<DataT> currentPixel = src_data[(i_src_bordered) * src_bordered_width + (j_src_bordered)];
-			pixel<DataT> median = window[(anchor * anchor - 1)/2];
+			pixel<DataT> median = window[(spec.window_size * spec.window_size - 1)/2];
 			double medianValue = median.value();
 			double pixelValue =  currentPixel.value();
 
@@ -99,6 +105,12 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 
 			if (median.value() < 0.2){
 				os << "mediana negra(" << median.R << ", " << median.G << ", " << median.B << ")"<< sycl::endl;
+				for (int i = 0; i < spec.window_size*spec.window_size; i++)
+				{
+					os << "(" << window[i].R << ", " << window[i].G << ", " << window[i].B << ")(" << (int) window[i].value() <<") - ";
+				}
+				os << sycl::endl;
+				
 			}
 
 			pixel<DataT> green(0, 255, 0, 255);
@@ -106,7 +118,8 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 
 			dst_data[i_destino * dst_width + j_destino] = median;
 
-			// if (fabs((median.value() - currentPixel.value()) / median.value()) <= 0.2) {
+			// Threshold
+			// if (median.value() > 0 && fabs((median.value() - currentPixel.value()) / median.value()) <= 0.2) {
 			// 	dst_data[i_destino * dst_width + j_destino] = currentPixel;
 			// }else {
 			// 	dst_data[i_destino * dst_width + j_destino] = median;
