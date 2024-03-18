@@ -152,8 +152,6 @@ sycl::event box_filter_roi(sycl::queue& q, image<DataT, AllocatorT>& src, image<
 
         // std::cout << "Valor de alpha " << alpha << std::endl;
 
-		q.memcpy(dst_data, src.get_data(), src.get_linear_size() * sizeof(pixel<DataT>)).wait();
-
 
 		sycl::stream os(1024*1024, 1024, cgh);
 
@@ -201,6 +199,7 @@ sycl::event box_filter_roi(sycl::queue& q, image<DataT, AllocatorT>& src, image<
 
 			//os << "sumaR = " << R << ", sumaG = " << G << ", sumaB = " << B << sycl::endl;
 		});
+		q.memcpy(dst_data, src.get_data(), src.get_linear_size() * sizeof(pixel<DataT>)).wait();
 	});
     
 
