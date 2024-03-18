@@ -6,84 +6,33 @@
 #include "../border_generator/border_types.h"
 #include "../border_generator/border_generator.h"
 
-template<typename DataT>
-void swap(pixel<DataT>* a, pixel<DataT>* b){
-    pixel<DataT> temp = *a;
-    *a = *b;
-    *b = temp;
-}
+#define MAX_WINDOW 5
 
-template< typename DataT>
-int partition(pixel<DataT>* window, int left, int right){
-    pixel<DataT> last = window[right];
-    int i = left, j = left;
-    while (j < right)
+template <typename DataT>
+void buble_sort(pixel<DataT> array[], int size) {
+    int i, j;
+	pixel<DataT> tmp;
+
+    pixel<DataT>* p = array + 12 * sizeof(pixel<DataT>);
+
+	for (i=1; i<size; i++)
+		for (j=0 ; j<size - i; j++)
+			if (array[j] > array[j+1]){
+				tmp = {array[j].R, array[j].G, array[j].B, array[j].A};
+				array[j] = array[j+1];
+				array[j+1] = {tmp.R, tmp.G, tmp.B, tmp.A};
+			}
+
+    for (int i = 0; i < size * size; i++)
     {
-        if(window[i] < last){
-            swap(&window[i], &window[j]);
-            i++;
-        }
-        j++;
+        /* code */
     }
-    swap(&window[i], &window[right]);
-    return i;
-}
-
-template< typename DataT>
-int randomP(pixel<DataT>* window, int left, int right){
-    int subSize = right - left + 1;
-    int pivot = rand() % subSize;
-    swap(&window[left + pivot], &window[right]);
-    return partition(window, left, right);
-}
-
-
-template< typename DataT>
-void sort(pixel<DataT>* window, int left, int right, int k, pixel<DataT>& a, pixel<DataT>& b, bool& aUsed, bool& bUsed){
     
-    if(left <= right){
-        int indexP = randomP(window, left, right);
-        
-        if(indexP == k){
-            b = window[indexP];
-            bUsed = true;
-            if(aUsed) return;
-        }
-        else if(indexP == k - 1){
-            a = window[indexP];
-            aUsed = true;
-            if(bUsed) return;
-        }
-
-        if(indexP >= k)
-            return sort(window, left, indexP - 1, k, a, b, aUsed, bUsed);
-        return sort(window, indexP + 1, right, k, a, b, aUsed, bUsed);
-    }
-    return;
 }
-
-
-template< typename DataT>
-pixel<DataT> getMedian(pixel<DataT>* window, int size){
-    int median;
-    bool aUsed = false, bUsed = false;
-    pixel<DataT> a, b;
-
-    sort(window, 0, size - 1, size / 2, a, b, aUsed, bUsed);
-    return b;
-}
-
-
-
-struct median_spec
-{
-    int radius;
-};
 
 
 template <typename DataT, typename AllocatorT>
 sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
-						const median_spec& kernel,
 						border_types border_type = border_types::repl,
 						pixel<DataT> default_value = {},
 						const std::vector<sycl::event>& dependencies = {}) {
@@ -99,9 +48,8 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 	}
 	
 
-	image<DataT, AllocatorT>* bordered_image = generate_border<DataT, AllocatorT>(src, kernel.radius, border_type, default_value);
+	image<DataT, AllocatorT>* bordered_image = generate_border<DataT, AllocatorT>(src, sycl::range<2>(MAX_WINDOW, MAX_WINDOW), border_type, default_value);
 
-	
 
 	return q.submit([&](sycl::handler& cgh) {
 
@@ -122,31 +70,45 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 		sycl::stream os(1024*1024, 1024, cgh);
 
 		std::cout << "lanzando parallel for" << std::endl;
-        int anchor = (kernel.radius - 1) / 2;
+        int anchor = (MAX_WINDOW - 1) / 2;
 		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
 			// os << "dentro del kernel" << sycl::endl;
 
 			// os << "kernel usado" << sycl::endl;
 
+            pixel<DataT> window[MAX_WINDOW * MAX_WINDOW];
+
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
 
-			int i_src_bordered = i_destino + kernel.radius;
-			int j_src_bordered = j_destino + kernel.radius;
+			int i_src_bordered = i_destino + MAX_WINDOW;
+			int j_src_bordered = j_destino + MAX_WINDOW;
 
-            pixel<DataT>* window = src.get_allocator()->allocate(kernel.radius * kernel.radius);
-			for (int ii = 0; ii < kernel.radius; ii++)
+			for (int ii = 0; ii < MAX_WINDOW; ii++)
 			{
-				for (int jj = 0; jj < kernel.radius; jj++)
+				for (int jj = 0; jj < MAX_WINDOW; jj++)
 				{
 					int ii_src_bordered = ii + i_src_bordered - anchor;
 					int jj_src_bordered = jj + j_src_bordered - anchor;
 
-                    window[ii * kernel.radius + jj] = src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)];
+                    window[ii * MAX_WINDOW + jj] = src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)];
 				}
 			}
 
-			dst_data[i_destino * dst_width + j_destino] = getMedian(window, kernel.radius * kernel.radius);
+            buble_sort(window, MAX_WINDOW);
+			pixel<DataT> currentPixel = src_data[(i_src_bordered -anchor ) * src_bordered_width + (j_src_bordered - anchor)];
+			pixel<DataT> median = window[MAX_WINDOW/2];
+			double medianValue = 0.299 * median.R + 0.587 * median.G + 0.114 * median.B + 0.1;
+			double pixelValue =  0.299 * currentPixel.R + 0.587 * currentPixel.G + 0.114 * currentPixel.B + 0.1;
+
+			os << "mediana: " << (int) medianValue << "; pixel: " << (int) pixelValue << sycl::endl;
+
+			if (fabsf((medianValue - pixelValue) / medianValue) <= -1)
+				dst_data[i_destino * dst_width + j_destino] = src_data[(i_src_bordered) * src_bordered_width + (j_src_bordered - anchor)];
+			else
+				dst_data[i_destino * dst_width + j_destino] = median;
+
+			//dst_data[i_destino * dst_width + j_destino] = window[MAX_WINDOW * MAX_WINDOW / 2];
 
 			// os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;
 		});

@@ -17,6 +17,10 @@ struct pixel{
 		return 0.299 * R + 0.587 * G + 0.114 * B < 0.299 * other.R + 0.587 * other.G + other.B;;
 	}
 
+	bool operator>(const pixel<DataT>& other) const {
+		return 0.299 * R + 0.587 * G + 0.114 * B > 0.299 * other.R + 0.587 * other.G + other.B;;
+	}
+
 };
 
 template<typename DataT, typename ComputeT>

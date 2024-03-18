@@ -134,7 +134,7 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 				}
 			}
 			
-			os << (int) sum_Iw_R << " / " << (int) sum_w << " = " << (int)(sum_Iw_R / sum_w) << sycl::endl;
+			//os << (int) sum_Iw_R << " / " << (int) sum_w << " = " << (int)(sum_Iw_R / sum_w) << sycl::endl;
 
 			//os << "R=" << (int) (sum_Iw_R / sum_w) << sycl::endl;
 
