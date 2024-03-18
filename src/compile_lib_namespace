@@ -1,0 +1,1 @@
+icpx -fsycl prueba.cpp -o prueba.o
