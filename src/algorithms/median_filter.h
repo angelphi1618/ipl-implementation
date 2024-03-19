@@ -52,28 +52,14 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 	return q.submit([&](sycl::handler& cgh) {
 
 		cgh.depends_on(dependencies);
-
-		std::cout << "kernel copiado" << std::endl;
-
-		//std::cout << typeid(*src.get_allocator()).name() << std::endl;
-
 		pixel<DataT>* src_data = bordered_image->get_data();
-
 		pixel<DataT>* dst_data = dst.get_data();
 
 		int src_bordered_width = bordered_image->get_size().get(0);
-
 		int dst_width = dst.get_size().get(0);
 
-		sycl::stream os(1024*1024, 1024, cgh);
-
-		std::cout << "lanzando parallel for" << std::endl;
         int anchor = (spec.window_size - 1) / 2;
 		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
-			// os << "dentro del kernel" << sycl::endl;
-
-			// os << "kernel usado" << sycl::endl;
-
             pixel<DataT> window[MAX_WINDOW * MAX_WINDOW];
 
 			int i_destino = item.get(1);
@@ -94,39 +80,14 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 			}
 
             buble_sort(window, spec.window_size*spec.window_size);
+
 			pixel<DataT> currentPixel = src_data[(i_src_bordered) * src_bordered_width + (j_src_bordered)];
 			pixel<DataT> median = window[(spec.window_size * spec.window_size - 1)/2];
+
 			double medianValue = median.value();
 			double pixelValue =  currentPixel.value();
 
-			if (currentPixel.value() < 0.2){
-				os << "pixel negro(" << median.R << ", " << median.G << ", " << median.B << ")"<< sycl::endl;
-			}
-
-			if (median.value() < 0.2){
-				os << "mediana negra(" << median.R << ", " << median.G << ", " << median.B << ")"<< sycl::endl;
-				for (int i = 0; i < spec.window_size*spec.window_size; i++)
-				{
-					os << "(" << window[i].R << ", " << window[i].G << ", " << window[i].B << ")(" << (int) window[i].value() <<") - ";
-				}
-				os << sycl::endl;
-				
-			}
-
-			pixel<DataT> green(0, 255, 0, 255);
-			//os << "mediana: " << (int) medianValue << "; pixel: " << (int) pixelValue << sycl::endl;
-
 			dst_data[i_destino * dst_width + j_destino] = median;
-
-			// Threshold
-			// if (median.value() > 0 && fabs((median.value() - currentPixel.value()) / median.value()) <= 0.2) {
-			// 	dst_data[i_destino * dst_width + j_destino] = currentPixel;
-			// }else {
-			// 	dst_data[i_destino * dst_width + j_destino] = median;
-			// }
-			//dst_data[i_destino * dst_width + j_destino] = window[MAX_WINDOW * MAX_WINDOW / 2];
-
-			// os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;
 		});
 	});
 

@@ -8,7 +8,6 @@
 #include "../exceptions/unimplemented.h"
 #include <cmath>
 
-//TODO: verificar que solo se puedan usar los bordes que se especifican
 template <typename ComputeT = float>
 struct bilateral_filter_spec{
 	unsigned int kernel_size;
@@ -30,8 +29,6 @@ inline ComputeT get_w(int i, int j, int k, int l, ComputeT twice_sigma_d_sqrd, C
 	ComputeT second_term = static_cast<ComputeT>((I_ij.R - I_kl.R) + (I_ij.G - I_kl.G) + (I_ij.B - I_kl.B) + (I_ij.A - I_kl.A));
 	second_term = second_term * second_term;
 	second_term = second_term / twice_sigma_i_sqrd;
-
-	//os << "first = " << (int) first_term  << " sec = " << (int) second_term << sycl::endl;
 
 	return exp(0.0 - first_term - second_term);
 }
@@ -64,20 +61,12 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 
 		cgh.depends_on(dependencies);
 
-		std::cout << "kernel copiado" << std::endl;
-
-		//std::cout << typeid(*src.get_allocator()).name() << std::endl;
-
 		pixel<DataT>* src_data = bordered_image->get_data();
 		pixel<DataT>* dst_data = dst.get_data();
 
 		int src_bordered_width = bordered_image->get_size().get(0);
-
 		int dst_width = dst.get_size().get(0);
 
-		sycl::stream os(1024*1024, 1024, cgh);
-
-		std::cout << "lanzando parallel for" << std::endl;
 		// Tamaño de la imagen destino
 		int x_anchor = (kernel_width - 1) / 2;
 		int y_anchor = (kernel_height - 1) / 2;
@@ -86,10 +75,6 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 		ComputeT twice_sigma_i_sqrd = 2 * spec.sigma_intensity * spec.sigma_intensity;
 
 		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
-			// os << "dentro del kernel bilateral" << sycl::endl;
-
-			// os << "kernel usado" << sycl::endl;
-
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
 
@@ -115,37 +100,19 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 
 					ComputeT w = get_w(i_src_bordered, j_src_bordered, kk_src_bordered, ll_src_bordered, twice_sigma_d_sqrd, twice_sigma_i_sqrd, I_ij, I_kl, os);
 
-					if (w > 0.0){
-						//os << "NUMERO W = 0" << sycl::endl;
-					}
-
 					sum_w += w;
-
 					sum_Iw_R += I_kl.R * w;
 					sum_Iw_G += I_kl.G * w;
 					sum_Iw_B += I_kl.B * w;
 					sum_Iw_A += I_kl.A * w;
-
-
-					//R = R + ((ComputeT)src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)].R * kernel_data[k * kernel_width + l]);
-					//G = G + ((ComputeT)src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)].G * kernel_data[k * kernel_width + l]);
-					//B = B + ((ComputeT)src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)].B * kernel_data[k * kernel_width + l]);
-					//A = A + ((ComputeT)src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)].A * kernel_data[k * kernel_width + l]);
 				}
 			}
-			
-			//os << (int) sum_Iw_R << " / " << (int) sum_w << " = " << (int)(sum_Iw_R / sum_w) << sycl::endl;
-
-			//os << "R=" << (int) (sum_Iw_R / sum_w) << sycl::endl;
-
 			dst_data[i_destino * dst_width + j_destino] = {
 				(DataT) (sum_Iw_R / sum_w),
 				(DataT) (sum_Iw_G / sum_w),
 				(DataT) (sum_Iw_B / sum_w),
 				(DataT) (sum_Iw_A / sum_w),
 			};
-
-			// os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;
 		});
 	});
 }

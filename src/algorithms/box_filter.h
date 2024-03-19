@@ -51,27 +51,18 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 		cgh.depends_on(dependencies);
 
 		pixel<DataT>* src_data = bordered_image->get_data();
-
 		pixel<DataT>* dst_data = dst.get_data();
 
 		int src_bordered_width = bordered_image->get_size().get(0);
-
 		int dst_width = dst.get_size().get(0);
 
         ComputeT alpha = 1 / (ComputeT) kernel.kernel_size.size();
 
-        std::cout << "Valor de alpha " << alpha << std::endl;
-
-		sycl::stream os(1024*1024, 1024, cgh);
-
-		std::cout << "lanzando parallel for" << std::endl;
 		// Tamaño de la imagen destino
 		int x_anchor = kernel.x_anchor;
 		int y_anchor = kernel.y_anchor;
-		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
-			// os << "dentro del kernel" << sycl::endl;
 
-			// os << "kernel usado" << sycl::endl;
+		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
 
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
@@ -100,8 +91,6 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 			}
 
 			dst_data[i_destino * dst_width + j_destino] = {(DataT) R, (DataT) G, (DataT) B, (DataT)A };
-
-			//os << "sumaR = " << R << ", sumaG = " << G << ", sumaB = " << B << sycl::endl;
 		});
 	});
     

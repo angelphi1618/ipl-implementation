@@ -2,3 +2,4 @@
 bin/
 *.bmp
 *.png
+*.DS_Store

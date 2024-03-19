@@ -77,32 +77,10 @@ sycl::event gaussian_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image
 
 	ComputeT suma = static_cast<ComputeT>(0);
 	for (int i = 0; i < kernel_height*kernel_width; i++)
-		{
 			suma += gaussian_kernel_host[i];
-			// std::cout << "suma = " << suma << std::endl;
-		}
-
-	// for (int i = 0; i < kernel_height; i++)
-	// {
-	// 	for (int j = 0; j < kernel_width; j++)
-	// 	{
-	// 		std::cout << gaussian_kernel_host[i*kernel_width + j] << "\t";
-	// 	}
-	// 	std::cout << std::endl;
-	// }
 	
-	// suma = (2 * 3.141592) * kernel_spec.sigma_x * kernel_spec.sigma_y;
 	for (int i = 0; i < kernel_height*kernel_width; i++)
 		gaussian_kernel_host[i] = gaussian_kernel_host[i] / (suma);
-
-	// for (int i = 0; i < kernel_height; i++)
-	// {
-	// 	for (int j = 0; j < kernel_width; j++)
-	// 	{
-	// 		std::cout << gaussian_kernel_host[i*kernel_width + j] << "\t";
-	// 	}
-	// 	std::cout << std::endl;
-	// }
 
 	// Generamos el kernel tal y como espera filter_convolution
 	filter_convolution_spec<ComputeT> kernel(sycl::range<2>(kernel_width, kernel_height), gaussian_kernel_host);
