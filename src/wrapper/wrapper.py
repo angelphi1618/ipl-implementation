@@ -17,6 +17,12 @@ clibrary.loadBMP.restype = ctypes.c_void_p
 clibrary.saveBMP.argtypes = [image, ctypes.c_char_p]
 clibrary.saveBMP.restype = ctypes.c_void_p
 
+# Load png file
+clibrary.loadPNG.argtypes = [image, ctypes.c_char_p]
+clibrary.loadPNG.restype = ctypes.c_void_p
+clibrary.savePNG.argtypes = [image, ctypes.c_char_p]
+clibrary.savePNG.restype = ctypes.c_void_p
+
 class border(Enum):
 	repl = 0,
 	wrap = 1,
@@ -39,6 +45,12 @@ def loadBMP(imagen, ruta):
 
 def saveBMP(imagen, ruta):
 	clibrary.saveBMP(imagen, ruta)
+
+def loadPNG(imagen, ruta):
+	clibrary.loadPNG(imagen, ruta)
+
+def savePNG(imagen, ruta):
+	clibrary.savePNG(imagen, ruta)
 
 #Carlos
 

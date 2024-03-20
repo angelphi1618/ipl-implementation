@@ -1,6 +1,7 @@
 #include "../image.h"
 #include "../allocators/device_usm_allocator_t.h"
 #include "../image_persistance/bmp_persistance.h"
+#include "../image_persistance/png_persistance.h"
 #include <cstdint>
 
 
@@ -40,6 +41,19 @@ extern "C" {
 		bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*img, str);
 	}
 
+
+	void loadPNG(image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* img, char* filename) {
+		std::string str(filename);
+        std::cout << str << std::endl;
+		png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageLoader(*img);
+		std::cout << "hola desde loadBMP"<< std::endl;
+		imageLoader.loadImage(str);
+	}
+
+	void savePNG(image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* img, char* filename) {
+		std::string str(filename);
+		png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*img, str);
+	}
 
     //Algotithms
 
