@@ -6,6 +6,12 @@
 
 extern "C" {
 
+	enum bordes{
+		repl,
+		mirror,
+		constante
+	};
+
 	sycl::queue* createQueue() {
 		sycl::device dev = sycl::device(sycl::cpu_selector());
         std::cout << "hola desde la cola" << std::endl;

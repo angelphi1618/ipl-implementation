@@ -26,6 +26,7 @@ $(BINDIR)/%.o: $(SRCDIR)/%.cpp
 
 run:
 	cd ./$(BINDIR) && ./main.out
-
+wrapper:
+	cd $(SRCDIR)/wrapper && icpx -fPIC -shared -L/usr/lib/gcc/x86_64-linux-gnu/11 -fsycl wrapper.cpp -o ipl.so -w
 clean:
 	rm -rf $(BINDIR)/*.o && rm -rf $(BINDIR)/*.out
