@@ -42,6 +42,11 @@ int main() {
 		<< Q.get_device().get_info<sycl::info::device::name>()
 		<< std::endl;
 
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPruebaAllocator(Q, sycl::range(1200, 900));
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderP(imagenPruebaAllocator);
+	imageloaderP.loadImage("images/lolita.bmp");
+	imageloaderP.saveImage("images/pruebaAllocator.bmp");
+
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLena(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lenaSeparada(Q, sycl::range(512, 512), loca);
@@ -80,7 +85,7 @@ int main() {
 
 	//aaa.wait();
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaMediana, "images/lenaMediana.bmp");
-return;
+
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorder = generate_border(imagen, {52, 70}, border_types::const_val, {0, 0, 255, 255});
 	imageloader.saveImage("images/lolitaLocal.bmp");
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lolitaBorder, "images/lolitaConBorde.bmp");
@@ -236,6 +241,7 @@ return;
 	sobel_filter(Q, lolitaGris, lolitaSobel, {3}, border_types::repl).wait();
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(lolitaSobel, "images/gauss/lolitaSobel.bmp");
 	std::cout << "--------------------------------------------" << std::endl;
+
 
 
 	/*

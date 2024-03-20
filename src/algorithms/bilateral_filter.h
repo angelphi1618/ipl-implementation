@@ -19,7 +19,7 @@ struct bilateral_filter_spec{
 };
 
 template <typename ComputeT = float, typename DataT>
-inline ComputeT get_w(int i, int j, int k, int l, ComputeT twice_sigma_d_sqrd, ComputeT twice_sigma_i_sqrd, pixel<DataT>I_ij, pixel<DataT> I_kl, sycl::stream os){
+inline ComputeT get_w(int i, int j, int k, int l, ComputeT twice_sigma_d_sqrd, ComputeT twice_sigma_i_sqrd, pixel<DataT>I_ij, pixel<DataT> I_kl){
 	
 	// L1 norm
 	ComputeT first_term = (ComputeT) ((i - k)*(i - k) + (j - l)*(j - l));
@@ -98,7 +98,7 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 
 					pixel<DataT> I_kl = src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)];
 
-					ComputeT w = get_w(i_src_bordered, j_src_bordered, kk_src_bordered, ll_src_bordered, twice_sigma_d_sqrd, twice_sigma_i_sqrd, I_ij, I_kl, os);
+					ComputeT w = get_w(i_src_bordered, j_src_bordered, kk_src_bordered, ll_src_bordered, twice_sigma_d_sqrd, twice_sigma_i_sqrd, I_ij, I_kl);
 
 					sum_w += w;
 					sum_Iw_R += I_kl.R * w;
