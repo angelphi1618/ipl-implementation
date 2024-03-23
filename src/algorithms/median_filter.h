@@ -5,6 +5,8 @@
 #include "../image.h"
 #include "../border_generator/border_types.h"
 #include "../border_generator/border_generator.h"
+#include "../exceptions/invalid_argument.h"
+#include "../exceptions/unimplemented.h"
 
 #define MAX_WINDOW 5
 
