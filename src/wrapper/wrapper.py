@@ -23,6 +23,10 @@ clibrary.loadPNG.restype = ctypes.c_void_p
 clibrary.savePNG.argtypes = [image, ctypes.c_char_p]
 clibrary.savePNG.restype = ctypes.c_void_p
 
+#Bilateral Filter
+clibrary.bilateral_filter.argtypes = [queue, image, image, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_int]
+clibrary.bilateral_filter.restype = ctypes.c_void_p
+
 class border(Enum):
 	repl = 0,
 	wrap = 1,
@@ -53,6 +57,11 @@ def savePNG(imagen, ruta):
 	clibrary.savePNG(imagen, ruta)
 
 #Carlos
+
+def bilateralFilter(cola, imgSrc, imgDst, kernel_size, sigma_intensity, sigma_distance, border = 0):
+	clibrary.bilateral_filter(cola, imgSrc, imgDst, kernel_size, sigma_intensity, sigma_distance, border)
+
+
 
 
 #Angel

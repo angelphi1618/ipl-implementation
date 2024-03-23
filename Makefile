@@ -28,5 +28,7 @@ run:
 	cd ./$(BINDIR) && ./main.out
 wrapper:
 	cd $(SRCDIR)/wrapper && icpx -fPIC -shared -L/usr/lib/gcc/x86_64-linux-gnu/11 -fsycl wrapper.cpp -o ipl.so -w
+runWrapper:
+	cd $(SRCDIR)/wrapper && python3 main.py
 clean:
 	rm -rf $(BINDIR)/*.o && rm -rf $(BINDIR)/*.out

@@ -2,6 +2,10 @@
 #include "../allocators/device_usm_allocator_t.h"
 #include "../image_persistance/bmp_persistance.h"
 #include "../image_persistance/png_persistance.h"
+#include "../algorithms/bilateral_filter.h"
+#include "../algorithms/box_filter.h"
+#include "../algorithms/filter_convolution.h"
+#include "../border_generator/border_types.h"
 #include <cstdint>
 
 
@@ -55,11 +59,16 @@ extern "C" {
 		png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*img, str);
 	}
 
-    //Algotithms
+	
+	void bilateral_filter(sycl::queue* queue, 
+							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgOrg, 
+							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgDst,
+							unsigned int kernel_size, double sigma_intensity, double sigma_distance, int border = 0){
 
-    // void filter_convolution(sycl::queue* queue, image<uint8_t, 
-    //                     device_usm_allocator_t<pixel<uint8_t>>>* imgOrg, image<uint8_t, 
-    //                     device_usm_allocator_t<pixel<uint8_t>>>* imgDst){
-                        
-    // }
+		bilateral_filter_spec<double> spec(kernel_size, sigma_intensity, sigma_distance);						
+		bilateral_filter(*queue, *imgOrg, *imgDst, spec, static_cast<border_types>(border)).wait();
+
+	}
+	
+
 }
