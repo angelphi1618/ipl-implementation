@@ -4,6 +4,7 @@ from enum import Enum
 clibrary = ctypes.CDLL("./ipl.so")
 queue = ctypes.POINTER(ctypes.c_char)
 image = ctypes.POINTER(ctypes.c_char)
+kernelDataType = ctypes.POINTER(ctypes.c_float)
 
 # SYCL Queue create
 clibrary.createQueue.argtypes = []
@@ -34,6 +35,10 @@ clibrary.box_filter.restype = ctypes.c_void_p
 #Gaussian Filter
 clibrary.gaussian_filter.argtypes = [queue, image, image, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_int]
 clibrary.gaussian_filter.restype = ctypes.c_void_p
+
+#Convolution Filter
+clibrary.filter_convolution.argtypes = [queue, image, image,ctypes.c_int, ctypes.c_int, kernelDataType, ctypes.c_int]
+clibrary.filter_convolution.restype = ctypes.c_void_p
 
 Border = Enum('Border', ['repl', 'wrap', 'mirror', 'mirror_repl', 'default_val', 'const_val', 'transp'])
 
@@ -68,5 +73,9 @@ def boxFilter(cola, imgSrc, imgDst, w, h, borde=Border.repl):
 
 def gaussianFilter(cola, imgSrc, imgDst, kernelSize, sigmaX, sigmaY, borde=Border.repl):
 	clibrary.gaussian_filter(cola, imgSrc, imgDst, kernelSize, sigmaX, sigmaY, borde.value - 1)
+
+def convolutionFilter(cola, imgSrc, imgDst, w, h, kernelData, borde=Border.repl):
+	kernelData2 = (ctypes.c_float * len(kernelData))(*kernelData)
+	clibrary.filter_convolution(cola, imgSrc, imgDst, w, h, kernelData2, borde.value - 1)
 
 #Angel

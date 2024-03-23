@@ -10,6 +10,7 @@ print("Imagen creada")
 imagenBilateral = ipl.createImage(cola, 1200, 900)
 imagenBox = ipl.createImage(cola, 1200, 900)
 imagenGaussian = ipl.createImage(cola, 1200, 900)
+imagenConvolution = ipl.createImage(cola, 1200, 900)
 
 ipl.loadBMP(imagen, b"lolita.bmp")
 print("Imagen cargada")
@@ -27,3 +28,8 @@ print("Imagen box")
 ipl.gaussianFilter(cola, imagen, imagenGaussian, 9, 75, 75, ipl.Border.const_val)
 ipl.saveBMP(imagenGaussian, b"lolitaGaussiana.bmp")
 print("imagen gaussian")
+
+
+ipl.convolutionFilter(cola, imagen, imagenConvolution, 3, 3, [1.0, 0.0, -1.0, 2.0, 0.0, -2.0, 1.0, 0.0, -1.0], ipl.Border.repl)
+ipl.saveBMP(imagenConvolution, b"lolitaConvolucion.bmp")
+print("imagen Convolution")

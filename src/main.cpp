@@ -24,7 +24,7 @@
 int main() {
 
 	sycl::device dev;
-	dev = sycl::device(sycl::gpu_selector());
+	dev = sycl::device(sycl::cpu_selector());
 	sycl::queue Q(dev);
 
 	device_usm_allocator_t<pixel<uint8_t>> loca(Q);
@@ -66,6 +66,7 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGris(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaSobel(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaBilateral(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaConvolucionada(Q, sycl::range(1200, 900), loca);
 
 	//median_spec median = {5};
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaMediana(Q, sycl::range(512, 512), loca);
@@ -140,7 +141,8 @@ int main() {
 	filter_convolution_spec<int> kernel_spec({3 ,3}, kernel2.data(),1, 1);
 
 	
-
+	filter_convolution<int>(Q, imagen, lolitaConvolucionada, kernel_spec, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lolitaConvolucionada, "images/lolitaConvolucionada.bmp");
 	std::cout << "filtrado convolucion " << std::endl;
 	filter_convolution<int>(Q, imagenLena, imagenLenaOutput, kernel_spec, border_types::repl).wait();
 	std::cout << "filtrado convolucion ok" << std::endl;

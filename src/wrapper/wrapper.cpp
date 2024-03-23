@@ -64,7 +64,7 @@ extern "C" {
 	void bilateral_filter(sycl::queue* queue, 
 							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgOrg, 
 							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgDst,
-							unsigned int kernel_size, double sigma_intensity, double sigma_distance, int border = 0){
+							unsigned int kernel_size, double sigma_intensity, double sigma_distance, int border){
 
 		bilateral_filter_spec<double> spec(kernel_size, sigma_intensity, sigma_distance);						
 		bilateral_filter(*queue, *imgOrg, *imgDst, spec, static_cast<border_types>(border)).wait();
@@ -84,10 +84,20 @@ extern "C" {
 	void gaussian_filter(sycl::queue* queue, 
 							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgOrg, 
 							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgDst,
-							int kernel_size, double sigma_x, double sigma_y, int border = 0){
+							int kernel_size, double sigma_x, double sigma_y, int border){
 
 		gaussian_filter_spec spec(kernel_size, sigma_x, sigma_y);
 		gaussian_filter(*queue, *imgOrg, *imgDst, spec, static_cast<border_types>(border)).wait();
+	}
+
+	void filter_convolution(sycl::queue* queue, 
+							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgOrg, 
+							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgDst,
+							int width, int height, float kernel_data[], int border){
+
+		sycl::range<2> rg(width, height);
+		filter_convolution_spec spec(rg, kernel_data);
+		filter_convolution(*queue, *imgOrg, *imgDst, spec, static_cast<border_types>(border)).wait();					
 	}
 
 }
