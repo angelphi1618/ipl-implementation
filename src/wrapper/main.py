@@ -25,10 +25,11 @@ ipl.boxFilter(cola, imagen, imagenBox, 30, 30, ipl.Border.const_val)
 ipl.saveBMP(imagenBox, b"lolitaBox.bmp")
 print("Imagen box")
 
-ipl.gaussianFilter(cola, imagen, imagenGaussian, 9, 75, 75, ipl.Border.const_val)
+ipl.gaussianFilter(cola, imagen, imagenGaussian, 100, 20, 20, ipl.Border.const_val, ipl.Pixel(0, 255, 0, 255))
 ipl.saveBMP(imagenGaussian, b"lolitaGaussiana.bmp")
 print("imagen gaussian")
 
+exit
 
 ipl.convolutionFilter(cola, imagen, imagenConvolution, 3, 3, [1.0, 0.0, -1.0, 2.0, 0.0, -2.0, 1.0, 0.0, -1.0], ipl.Border.repl)
 ipl.saveBMP(imagenConvolution, b"lolitaConvolucion.bmp")

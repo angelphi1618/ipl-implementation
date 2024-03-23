@@ -22,7 +22,7 @@ struct box_filter_spec{
 template <typename ComputeT, typename DataT, typename AllocatorT>
 sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
 						const box_filter_spec& kernel,
-						border_types border_type = border_types::default_val,
+						border_types border_type = border_types::const_val,
 						pixel<DataT> default_value = {},
 						const std::vector<sycl::event>& dependencies = {}) {
 

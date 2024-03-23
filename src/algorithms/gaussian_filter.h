@@ -23,7 +23,7 @@ struct gaussian_filter_spec{
 template <typename ComputeT = float, typename DataT, typename AllocatorT>
 sycl::event gaussian_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
 						const gaussian_filter_spec<ComputeT>& kernel_spec,
-						border_types border_type = border_types::default_val,
+						border_types border_type = border_types::const_val,
 						pixel<DataT> default_value = {},
 						const std::vector<sycl::event>& dependencies = {})
 {
