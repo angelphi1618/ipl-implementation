@@ -31,6 +31,10 @@ clibrary.bilateral_filter.restype = ctypes.c_void_p
 clibrary.box_filter.argtypes = [queue, image, image, ctypes.c_int, ctypes.c_int, ctypes.c_int]
 clibrary.box_filter.restype = ctypes.c_void_p
 
+#Gaussian Filter
+clibrary.gaussian_filter.argtypes = [queue, image, image, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_int]
+clibrary.gaussian_filter.restype = ctypes.c_void_p
+
 Border = Enum('Border', ['repl', 'wrap', 'mirror', 'mirror_repl', 'default_val', 'const_val', 'transp'])
 
 print("clibrary lista")
@@ -61,5 +65,8 @@ def bilateralFilter(cola, imgSrc, imgDst, kernel_size, sigma_intensity, sigma_di
 
 def boxFilter(cola, imgSrc, imgDst, w, h, borde=Border.repl):
 	clibrary.box_filter(cola, imgSrc, imgDst, w, h, borde.value - 1)
+
+def gaussianFilter(cola, imgSrc, imgDst, kernelSize, sigmaX, sigmaY, borde=Border.repl):
+	clibrary.gaussian_filter(cola, imgSrc, imgDst, kernelSize, sigmaX, sigmaY, borde.value - 1)
 
 #Angel

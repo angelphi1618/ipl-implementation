@@ -4,6 +4,7 @@
 #include "../image_persistance/png_persistance.h"
 #include "../algorithms/bilateral_filter.h"
 #include "../algorithms/box_filter.h"
+#include "../algorithms/gaussian_filter.h"
 #include "../algorithms/filter_convolution.h"
 #include "../border_generator/border_types.h"
 #include <cstdint>
@@ -78,6 +79,15 @@ extern "C" {
 		sycl::range<2> rg(width, height);							
 		box_filter_spec spec(rg);
 		box_filter<double>(*queue, *imgOrg, *imgDst, spec, static_cast<border_types>(borde)).wait();					
+	}
+
+	void gaussian_filter(sycl::queue* queue, 
+							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgOrg, 
+							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgDst,
+							int kernel_size, double sigma_x, double sigma_y, int border = 0){
+
+		gaussian_filter_spec spec(kernel_size, sigma_x, sigma_y);
+		gaussian_filter(*queue, *imgOrg, *imgDst, spec, static_cast<border_types>(border)).wait();
 	}
 
 }
