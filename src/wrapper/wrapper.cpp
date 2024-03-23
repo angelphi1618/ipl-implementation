@@ -5,6 +5,7 @@
 #include "../algorithms/grayscale.h"
 #include "../algorithms/median_filter.h"
 #include "../algorithms/separable_filter.h"
+#include "../algorithms/sobel_filter.h"
 
 #include <cstdint>
 
@@ -78,6 +79,11 @@ extern "C" {
 	void separable_filter(sycl::queue* q, Image* src, Image* dst, int width, int height, int kernel_x[], int kernel_y[]) {
 		separable_spec<int> spec{sycl::range<2>(height, width), kernel_x, kernel_y};
 		separable_filter(*q, *src, *dst, spec, border_types::repl).wait();
+	}
+
+	void sobel_filter(sycl::queue* q, Image* src, Image* dst, int kernel_size) {
+		sobel_filter_spec spec(kernel_size);
+		sobel_filter(*q, *src, *dst, spec).wait();
 	}
     //Algotithms
 

@@ -79,3 +79,9 @@ def separableFilter(cola, src, dst, kernel_x, kernel_y):
 	kernel_x_c = (ctypes.c_int32 * width)(* kernel_x)
 	kernel_y_c = (ctypes.c_int32 * height)(* kernel_y)
 	clibrary.separable_filter(cola, src, dst, width, height, kernel_x_c, kernel_y_c)
+
+clibrary.sobel_filter.argtypes = [queue, image, image, ctypes.c_int32]
+clibrary.sobel_filter.restype = ctypes.c_void_p
+
+def sobelFilter(cola, src, dst, kernel_size):
+	clibrary.sobel_filter(cola, src, dst, kernel_size)
