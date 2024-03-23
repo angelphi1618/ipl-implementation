@@ -27,14 +27,11 @@ clibrary.savePNG.restype = ctypes.c_void_p
 clibrary.bilateral_filter.argtypes = [queue, image, image, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_int]
 clibrary.bilateral_filter.restype = ctypes.c_void_p
 
-class border(Enum):
-	repl = 0,
-	wrap = 1,
-	mirror = 2,
-	mirror_repl = 3,
-	default_val = 4, 
-	const_val = 5,
-	transp = 6
+#Box Filter
+clibrary.box_filter.argtypes = [queue, image, image, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+clibrary.box_filter.restype = ctypes.c_void_p
+
+Border = Enum('Border', ['repl', 'wrap', 'mirror', 'mirror_repl', 'default_val', 'const_val', 'transp'])
 
 print("clibrary lista")
 
@@ -58,10 +55,11 @@ def savePNG(imagen, ruta):
 
 #Carlos
 
-def bilateralFilter(cola, imgSrc, imgDst, kernel_size, sigma_intensity, sigma_distance, border = 0):
-	clibrary.bilateral_filter(cola, imgSrc, imgDst, kernel_size, sigma_intensity, sigma_distance, border)
+def bilateralFilter(cola, imgSrc, imgDst, kernel_size, sigma_intensity, sigma_distance, borde=Border.repl):
+	clibrary.bilateral_filter(cola, imgSrc, imgDst, kernel_size, sigma_intensity, sigma_distance, borde.value - 1)
 
 
-
+def boxFilter(cola, imgSrc, imgDst, w, h, borde=Border.repl):
+	clibrary.box_filter(cola, imgSrc, imgDst, w, h, borde.value - 1)
 
 #Angel

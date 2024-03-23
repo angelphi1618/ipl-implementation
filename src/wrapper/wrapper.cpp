@@ -70,5 +70,14 @@ extern "C" {
 
 	}
 	
+	void box_filter(sycl::queue* queue, 
+							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgOrg, 
+							image<uint8_t,device_usm_allocator_t<pixel<uint8_t>>>* imgDst,
+							int width, int height, int borde){
+
+		sycl::range<2> rg(width, height);							
+		box_filter_spec spec(rg);
+		box_filter<double>(*queue, *imgOrg, *imgDst, spec, static_cast<border_types>(borde)).wait();					
+	}
 
 }
