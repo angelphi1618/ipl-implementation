@@ -35,8 +35,9 @@ public:
 		this->data = this->allocator->allocate(this->defaultChannels * image_size.size());
 	}
 
-	explicit image(sycl::queue &queue, const sycl::range<2> &image_size, AllocatorT allocator, roi_rect& roi_rect) 
+	explicit image(sycl::queue &queue, const sycl::range<2> &image_size, AllocatorT& allocator, roi_rect& roi_rect) 
 	: queue(&queue), size(image_size), allocator(&allocator), roi(sycl::range<2>(0, 0), sycl::range<2>(0, 0)) {
+
 		this->data = this->allocator->allocate(this->defaultChannels * image_size.size());
 
 		if (roi_rect.get_x_offset() < 0 || roi_rect.get_y_offset() < 0)
