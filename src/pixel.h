@@ -13,10 +13,17 @@ struct pixel{
 	inline pixel(): R(0), G(0), B(0), A(255) {};
 		
 	
-	bool operator<(const pixel<DataT>& other) const {
-		return 0.299 * R + 0.587 * G + 0.114 * B < 0.299 * other.R + 0.587 * other.G + other.B;;
+	inline bool operator<(const pixel<DataT>& other) const {
+		return value() < other.value();
 	}
 
+	inline bool operator>(const pixel<DataT>& other) const {
+		return value() > other.value();
+	}
+
+	inline float value() {
+		return 0.299 * R + 0.587 * G + 0.114 * B;
+	}
 };
 
 template<typename DataT, typename ComputeT>

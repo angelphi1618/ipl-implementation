@@ -17,6 +17,7 @@
 #include "algorithms/gaussian_filter.h"
 #include "algorithms/separable_filter.h"
 #include "algorithms/bilateral_filter.h"
+#include "algorithms/median_filter.h"
 
 #include "algorithms/sobel_filter.h"
 
@@ -41,9 +42,18 @@ int main() {
 		<< Q.get_device().get_info<sycl::info::device::name>()
 		<< std::endl;
 
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPruebaAllocator(Q, sycl::range(1200, 900));
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderP(imagenPruebaAllocator);
+	imageloaderP.loadImage("images/lolita.bmp");
+	imageloaderP.saveImage("images/pruebaAllocator.bmp");
+
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLena(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lenaSeparada(Q, sycl::range(512, 512), loca);
+
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lenaRecortada(Q, sycl::range(126, 130), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lenaRecortadaGuadada(Q, sycl::range(126, 130), loca);
+
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutput(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaGris(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaSobel(Q, sycl::range(512, 512), loca);
@@ -56,23 +66,26 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGris(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaSobel(Q, sycl::range(1200, 900), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaBilateral(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaConvolucionada(Q, sycl::range(1200, 900), loca);
 
 	//median_spec median = {5};
-	//image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaMediana(Q, sycl::range(512, 512), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaMediana(Q, sycl::range(512, 512), loca);
 
 
 
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloader(imagen);
+		bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderLenaRecortada(lenaRecortada);
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderLena(imagenLena);
 
 
 	imageloader.loadImage("images/lolita.bmp");
 	imageloaderLena.loadImage("images/prueba.bmp");
+	imageloaderLenaRecortada.loadImage("images/lenaRecortada.bmp");
 
-	//auto aaa = median_filter(Q, imagenLena, imagenLenaMediana, median);
+	median_filter(Q, imagenLena, imagenLenaMediana, {5}).wait();
 
 	//aaa.wait();
-	//bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaMediana, "images/lenaMediana.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaMediana, "images/lenaMediana.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorder = generate_border(imagen, {52, 70}, border_types::const_val, {0, 0, 255, 255});
 	imageloader.saveImage("images/lolitaLocal.bmp");
@@ -128,7 +141,8 @@ int main() {
 	filter_convolution_spec<int> kernel_spec({3 ,3}, kernel2.data(),1, 1);
 
 	
-
+	filter_convolution<int>(Q, imagen, lolitaConvolucionada, kernel_spec, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lolitaConvolucionada, "images/lolitaConvolucionada.bmp");
 	std::cout << "filtrado convolucion " << std::endl;
 	filter_convolution<int>(Q, imagenLena, imagenLenaOutput, kernel_spec, border_types::repl).wait();
 	std::cout << "filtrado convolucion ok" << std::endl;
@@ -229,6 +243,7 @@ int main() {
 	sobel_filter(Q, lolitaGris, lolitaSobel, {3}, border_types::repl).wait();
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(lolitaSobel, "images/gauss/lolitaSobel.bmp");
 	std::cout << "--------------------------------------------" << std::endl;
+
 
 
 	/*

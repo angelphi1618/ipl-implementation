@@ -15,7 +15,7 @@ struct sobel_filter_spec{
 template <typename DataT, typename AllocatorT>
 sycl::event sobel_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
 						const sobel_filter_spec& kernel,
-						border_types border_type = border_types::default_val,
+						border_types border_type = border_types::const_val,
 						pixel<DataT> default_value = {},
 						const std::vector<sycl::event>& dependencies = {})
 {
@@ -48,19 +48,12 @@ sycl::event sobel_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Da
 		pixel<DataT>* dst_data = dst.get_data();
 
 		int src_bordered_width = bordered_image->get_size().get(0);
-
 		int dst_width = dst.get_size().get(0);
-
-		sycl::stream os(1024*1024, 1024, cgh);
-
-		std::cout << "lanzando parallel for" << std::endl;
-
 		int x_anchor = (kernel.kernel_size - 1) / 2;
 		int y_anchor = (kernel.kernel_size - 1) / 2;
 
 
 		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
-			// os << "dentro del kernel" << sycl::endl;
 
 			int kernel_data_x[5 * 5];
 			int kernel_data_y[5 * 5];
@@ -74,22 +67,11 @@ sycl::event sobel_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Da
 					kernel_data_y[i] = temp_kernel_data_y[i];
 				}
 			} else {
-				// int temp_kernel_data_x[5 * 5] = {1, 2,  0,  -2,  -1, 
-				// 								 4, 8,  0,  -8,  -4,
-				// 								 6, 12, 0,  -12, -6,
-				// 								 4, 8,  0,  -8,  -4, 
-				// 								 1, 2,  0,  -2,  -1};
 				int temp_kernel_data_x[5*5] = {5, 8, 10, 8, 5,
 												4, 10, 20, 10, 4,
 												0,0,0,0,0,
 												-4,-10,-20,-10,-4,
 												-5,-8,-10,-8,-5};
-
-				// int temp_kernel_data_y[5 * 5] = {1,  4,  6,   4,  1, 
-				// 								 2,  8,  12,  8,  2,
-				// 								 0,  0,  0,   0,  0, 
-				// 							    -2, -8, -12, -8, -2,
-				// 								-1, -4, -6,  -4, -1};
 
 				int temp_kernel_data_y[5 * 5]= {-5, -4, 0, 4, 5,
 												-8, -10,0,10,8,
@@ -101,8 +83,6 @@ sycl::event sobel_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Da
 					kernel_data_y[i] = temp_kernel_data_y[i];
 				}
 			}
-
-			// os << "kernel usado" << sycl::endl;
 
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);

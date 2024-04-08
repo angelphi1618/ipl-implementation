@@ -7,7 +7,7 @@
 #include "../border_generator/border_generator.h"
 #include "../exceptions/unimplemented.h"
 
-//TODO: verificar que solo se puedan usar los bordes que se especifican
+
 template <typename ComputeT = float>
 struct filter_convolution_spec{
 	sycl::range<2> kernel_size;
@@ -29,7 +29,7 @@ template <typename ComputeT = float,
 		typename DataT, typename AllocatorT>
 sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
 						const filter_convolution_spec<ComputeT>& kernel,
-						border_types border_type = border_types::default_val,
+						border_types border_type = border_types::const_val,
 						pixel<DataT> default_value = {},
 						const std::vector<sycl::event>& dependencies = {}) {
 
@@ -55,10 +55,6 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 
 		cgh.depends_on(dependencies);
 
-		std::cout << "kernel copiado" << std::endl;
-
-		//std::cout << typeid(*src.get_allocator()).name() << std::endl;
-
 		pixel<DataT>* src_data = bordered_image->get_data();
 		ComputeT* kernel_data = static_cast<ComputeT*>(src.get_allocator()->allocate_bytes(kernel.kernel_size.size() * sizeof(ComputeT)));
 		q.memcpy(kernel_data, kernel.kernel_data, kernel.kernel_size.size() * sizeof(ComputeT));
@@ -66,19 +62,12 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 		pixel<DataT>* dst_data = dst.get_data();
 
 		int src_bordered_width = bordered_image->get_size().get(0);
-
 		int dst_width = dst.get_size().get(0);
 
-		sycl::stream os(1024*1024, 1024, cgh);
-
-		std::cout << "lanzando parallel for" << std::endl;
 		// Tamaño de la imagen destino
 		int x_anchor = kernel.x_anchor;
 		int y_anchor = kernel.y_anchor;
 		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
-			// os << "dentro del kernel" << sycl::endl;
-
-			// os << "kernel usado" << sycl::endl;
 
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
@@ -113,8 +102,6 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 				(DataT) B,
 				(DataT) A,
 			};
-
-			// os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;
 		});
 	});
 }

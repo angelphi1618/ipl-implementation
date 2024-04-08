@@ -20,7 +20,7 @@ template <typename ComputeT = int,
 		typename DataT, typename AllocatorT>
 sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
 						const separable_spec<ComputeT>& kernel,
-						border_types border_type = border_types::default_val,
+						border_types border_type = border_types::const_val,
 						pixel<DataT> default_value = {},
 						const std::vector<sycl::event>& dependencies = {}) {
 
@@ -45,24 +45,20 @@ sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
     pixel<DataT>* dst_data = dst.get_data();
 
     int bordered_width = bordered_image->get_size().get(0);
-
     int anchor_y = (kernel.window.get(0) - 1) / 2;
     int anchor_x = (kernel.window.get(1) - 1) / 2;
     int dst_width = dst.get_size().get(0);
     int inter_width = intermediate->get_size().get(0);
+
     ComputeT* kernel_x = static_cast<ComputeT*>(src.get_allocator()->allocate_bytes(kernel.window.get(1)*sizeof(ComputeT)));
     ComputeT* kernel_y = static_cast<ComputeT*>(src.get_allocator()->allocate_bytes(kernel.window.get(0) *sizeof(ComputeT)));
 
     q.memcpy(kernel_x, kernel.kernel_x_ptr, kernel.window.get(1) *sizeof(ComputeT)).wait();
     q.memcpy(kernel_y, kernel.kernel_y_ptr, kernel.window.get(0) *sizeof(ComputeT)).wait();
 
-    std::cout << "Antes del 1 parallel" << std::endl;
-
     q.submit([&](sycl::handler& cgh) {
 
 		cgh.depends_on(dependencies);
-
-
 
 		// Row
         cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
@@ -101,19 +97,11 @@ sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 			};
 
         });
-
-
-
-
     }).wait();
-
-
-    std::cout << "Despues del 1 parallel" << std::endl;
 
     return q.submit([&](sycl::handler& cgh) {
 
         cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
-
 
             ComputeT R = 0;     
             ComputeT G = 0;                 
@@ -122,10 +110,7 @@ sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 
             int i_dst = item.get(1);
             int j_dst = item.get(0);
-
             int j = item.get(0) + kernel.window.get(1);
-
-            
 
             for (int i = 0; i < kernel.window.get(0); i++)
             {
@@ -150,10 +135,6 @@ sycl::event separable_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 				(DataT) B,
 				(DataT) A,
 			};
-
-            
-
-           //dst_data[i_dst * dst_width + j_dst] = intermediate_data[(item.get(1)  + 3)* bordered_width + item.get(0) + 3];
 
         });
 
