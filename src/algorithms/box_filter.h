@@ -5,7 +5,7 @@
 #include "../image.h"
 #include "../border_generator/border_types.h"
 #include "../border_generator/border_generator.h"
-
+#include "../exceptions/unimplemented.h"
 
 struct box_filter_spec{
 	sycl::range<2> kernel_size;
@@ -164,6 +164,8 @@ sycl::event box_filter_roi(sycl::queue& q, image<DataT, AllocatorT>& src, image<
 
 		int src_bordered_height = bordered_image->get_size().get(1);
 
+		q.memcpy(dst_data, src.get_data(), src.get_linear_size() * sizeof(pixel<DataT>)).wait();
+
 		cgh.parallel_for(sycl::range<2>(roi.get_height(), roi.get_width()), [=](sycl::id<2> item){
 			// os << "dentro del kernel" << sycl::endl;
 
@@ -199,7 +201,6 @@ sycl::event box_filter_roi(sycl::queue& q, image<DataT, AllocatorT>& src, image<
 
 			//os << "sumaR = " << R << ", sumaG = " << G << ", sumaB = " << B << sycl::endl;
 		});
-		q.memcpy(dst_data, src.get_data(), src.get_linear_size() * sizeof(pixel<DataT>)).wait();
 	});
     
 
