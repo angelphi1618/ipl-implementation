@@ -1,7 +1,11 @@
 import ctypes
+import os
 from enum import Enum
 
-clibrary = ctypes.CDLL("./ipl.so")
+current_dir = os.path.dirname(__file__)
+lib_path = os.path.join(current_dir, "ipl.so")
+
+clibrary = ctypes.CDLL(lib_path)
 queue = ctypes.POINTER(ctypes.c_char)
 image = ctypes.POINTER(ctypes.c_char)
 kernelDataType = ctypes.POINTER(ctypes.c_float)

@@ -9,7 +9,9 @@ mkdir $INSTALL_DIR
 
 # Vemos si /usr/bin/ipl está en el PYTHONPATH
 if ! [[ ":$PYTHONPATH:" == *":$INSTALL_DIR:"* ]]; then
-	PYTHONPATH=$PYTHONPATH:$INSTALL_DIR
+	# PYTHONPATH=$PYTHONPATH:$INSTALL_DIR
+	echo "export PYTHONPATH=\$PYTHONPATH:$INSTALL_DIR" >> ~/.bashrc
+	source ~/.bashrc
 fi
 
 # Creamos un directorio con el paquete ipl
