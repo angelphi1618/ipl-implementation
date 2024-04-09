@@ -13,7 +13,7 @@ SRCS = $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst $(SRCDIR)/%.cpp,$(BINDIR)/%.o,$(SRCS))
 TARGET = $(BINDIR)/main.out
 
-.PHONY: all clean run
+.PHONY: all clean run tests install
 
 all: $(TARGET)
 
@@ -27,8 +27,12 @@ $(BINDIR)/%.o: $(SRCDIR)/%.cpp
 run:
 	cd ./$(BINDIR) && ./main.out
 wrapper:
-	cd $(SRCDIR)/wrapper && icpx -fPIC -shared -L/usr/lib/gcc/x86_64-linux-gnu/11 -fsycl wrapper.cpp -o ipl.so -w
+	icpx -fPIC -shared -L/usr/lib/gcc/x86_64-linux-gnu/11 -fsycl $(SRCDIR)/wrapper/wrapper.cpp -o $(BINDIR)/ipl.so -w
 runWrapper:
 	cd $(SRCDIR)/wrapper && python3 main.py
 clean:
 	rm -rf $(BINDIR)/*.o && rm -rf $(BINDIR)/*.out
+tests:
+	cd ./utils && sh compileTests.sh && sh runTests.sh
+install: wrapper
+	cd ./utils && ./installWrapper.sh

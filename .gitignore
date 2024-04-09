@@ -4,4 +4,3 @@ bin/
 *.png
 *.DS_Store
 *.so
-src/tests

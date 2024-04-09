@@ -84,7 +84,6 @@ def loadPNG(imagen, ruta):
 def savePNG(imagen, ruta):
 	clibrary.savePNG(imagen, ruta)
 
-#Carlos
 
 def bilateralFilter(cola, imgSrc, imgDst, kernel_size, sigma_intensity, sigma_distance, borde=Border.repl, defaultValue=Pixel()):
 	clibrary.bilateral_filter(cola, imgSrc, imgDst, kernel_size, sigma_intensity, sigma_distance, borde.value - 1, defaultValue)
@@ -100,7 +99,6 @@ def convolutionFilter(cola, imgSrc, imgDst, w, h, kernelData, borde=Border.repl,
 	kernelData2 = (ctypes.c_float * len(kernelData))(*kernelData)
 	clibrary.filter_convolution(cola, imgSrc, imgDst, w, h, kernelData2, borde.value - 1, defaultValue)
 
-#Angel
 # Median Filter
 clibrary.medianFilter.argtypes = [queue, image, image, ctypes.c_uint32, ctypes.c_int, Pixel]
 clibrary.medianFilter.restype = ctypes.c_void_p
