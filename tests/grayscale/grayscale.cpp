@@ -1,11 +1,11 @@
 #include <CL/sycl.hpp>
 #include <cstdint>
 
-#include "../../image.h"
-#include "../../allocators/device_usm_allocator_t.h"
-#include "../../image_persistance/bmp_persistance.h"
+#include "../../src/image.h"
+#include "../../src/allocators/device_usm_allocator_t.h"
+#include "../../src/image_persistance/bmp_persistance.h"
 
-#include "../../algorithms/box_filter.h"
+#include "../../src/algorithms/grayscale.h"
 
 
 int main() {
@@ -25,16 +25,13 @@ int main() {
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageLoader(imagen);
 	imageLoader.loadImage("../../images/lolita.bmp");
 
-	box_filter_spec box_spec({30, 30});
-
-
-	box_filter<double>(Q, imagen, imagenBox, box_spec, border_types::repl);
-	box_filter_roi<double>(Q, imagen, imagenBoxRoi, box_spec, border_types::repl);
+	rgb_to_gray(Q, imagen, imagenBox);
+	rgb_to_gray_roi(Q, imagen, imagenBoxRoi);
 
 	Q.wait();
 
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./box_filter.bmp");
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBoxRoi, "./box_filter_roi.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./grayscale.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBoxRoi, "./grayscale_roi.bmp");
 
 	return 0;
 

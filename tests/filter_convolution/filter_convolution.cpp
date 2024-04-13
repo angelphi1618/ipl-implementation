@@ -1,11 +1,11 @@
 #include <CL/sycl.hpp>
 #include <cstdint>
 
-#include "../../image.h"
-#include "../../allocators/device_usm_allocator_t.h"
-#include "../../image_persistance/bmp_persistance.h"
+#include "../../src/image.h"
+#include "../../src/allocators/device_usm_allocator_t.h"
+#include "../../src/image_persistance/bmp_persistance.h"
 
-#include "../../algorithms/filter_convolution.h"
+#include "../../src/algorithms/filter_convolution.h"
 
 
 int main() {

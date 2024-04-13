@@ -1,11 +1,11 @@
 #include <CL/sycl.hpp>
 #include <cstdint>
 
-#include "../../image.h"
-#include "../../allocators/device_usm_allocator_t.h"
-#include "../../image_persistance/bmp_persistance.h"
+#include "../../src/image.h"
+#include "../../src/allocators/device_usm_allocator_t.h"
+#include "../../src/image_persistance/bmp_persistance.h"
 
-#include "../../algorithms/gaussian_filter.h"
+#include "../../src/algorithms/box_filter.h"
 
 
 int main() {
@@ -25,15 +25,16 @@ int main() {
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageLoader(imagen);
 	imageLoader.loadImage("../../images/lolita.bmp");
 
-	gaussian_filter_spec<double> gaussian_spec = {50, 6.4, 6.4};
+	box_filter_spec box_spec({30, 30});
 
-	gaussian_filter<double>(Q, imagen, imagenBox, gaussian_spec, border_types::repl);
-	gaussian_filter_roi<double>(Q, imagen, imagenBoxRoi, gaussian_spec, border_types::repl);
+
+	box_filter<double>(Q, imagen, imagenBox, box_spec, border_types::repl);
+	box_filter_roi<double>(Q, imagen, imagenBoxRoi, box_spec, border_types::repl);
 
 	Q.wait();
 
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./gaussian_filter.bmp");
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBoxRoi, "./gaussian_filter_roi.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./box_filter.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBoxRoi, "./box_filter_roi.bmp");
 
 	return 0;
 

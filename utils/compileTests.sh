@@ -2,10 +2,11 @@
 cd ..
 
 ROOTDIR=$(pwd)
-SRCDIR="$ROOTDIR/src/tests"
+
+SRCDIR="$ROOTDIR/tests"
 BINDIR="$ROOTDIR/bin/tests"
 CXX="icpx"
-CXXFLAGS="-w -O3 -fsycl"
+CXXFLAGS="-w -fsycl -g -I. -L/usr/lib/gcc/x86_64-linux-gnu/11 -Rno-debug-disables-optimization"
 
 # Creamos bin si no existe
 mkdir -p "$BINDIR"
@@ -17,7 +18,7 @@ for dir in *; do
 		echo -n "Compilando test $dir... "
 		rm -rf $BINDIR/$dir/*.o && rm -rf $BINDIR/$dir/*.out
 		mkdir -p "$BINDIR/$dir"
-		$CXX $CXXFLAGS "$SRCDIR/$dir/$dir.cpp" -o "$BINDIR/$dir/$dir.out" && echo "OK"
+		$CXX $CXXFLAGS -o "$BINDIR/$dir/$dir.out" "$SRCDIR/$dir/$dir.cpp" && echo "OK"
 	fi
 done
 
