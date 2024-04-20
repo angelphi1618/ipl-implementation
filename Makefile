@@ -26,13 +26,13 @@ $(BINDIR)/%.o: $(SRCDIR)/%.cpp
 
 run:
 	cd ./$(BINDIR) && ./main.out
-wrapper:
+wrapper $(BINDIR)/ipl.so:
 	icpx -fPIC -shared -L/usr/lib/gcc/x86_64-linux-gnu/11 -fsycl $(SRCDIR)/wrapper/wrapper.cpp -o $(BINDIR)/ipl.so -w
-runWrapper:
-	cd $(SRCDIR)/wrapper && python3 main.py
+runWrapper: $(BINDIR)/ipl.so
+	cp $(BINDIR)/ipl.so $(SRCDIR)/wrapper && cd $(SRCDIR)/wrapper && python3 main.py
 clean:
 	rm -rf $(BINDIR)/*.o && rm -rf $(BINDIR)/*.out
 tests:
 	cd ./utils && sh compileTests.sh && sh runTests.sh
-install: wrapper
+install: $(BINDIR)/ipl.so
 	cd ./utils && ./installWrapper.sh
