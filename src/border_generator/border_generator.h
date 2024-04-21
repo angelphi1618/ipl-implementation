@@ -23,6 +23,26 @@ image<DataT, AllocatorT>* generate_border(image<DataT, AllocatorT>& img, sycl::r
 
 }
 
+template<typename DataT>
+inline pixel<DataT> bordered_pixel_repl(pixel<DataT>* src, int i, int j, int w, int h) {
+	int low_bound_width  = 0;
+	int low_bound_height = 0;
+
+	int upper_bound_width  = w;
+	int upper_bound_height = h;
+	
+	int i_src = sycl::max<int>(sycl::min<int>(upper_bound_height - 1, i), low_bound_height);
+	int j_src = sycl::max<int>(sycl::min<int>(upper_bound_width  - 1, j), low_bound_width);
+
+
+	return src[i_src * w + j_src];
+}
+
+template<typename DataT>
+inline pixel<DataT>bordered_pixel_plain(pixel<DataT>* src, int i, int j, int w, int h, pixel<DataT> value) {
+	
+}
+
 template<typename DataT, typename AllocatorT>
 image<DataT, AllocatorT>* plain_border(image<DataT, AllocatorT>& img, sycl::range<2> borderSize, pixel<DataT> value){
 
@@ -44,7 +64,6 @@ image<DataT, AllocatorT>* plain_border(image<DataT, AllocatorT>& img, sycl::rang
 
     std::cout << "Creando Borde" << std::endl;
     std::cout << "w = " << newSizeW << " h = " << newSizeH << std::endl;
-    
 
     Q->submit([&](sycl::handler& cgh){
         cgh.parallel_for(sycl::range<2>(newSizeW, newSizeH), [=](sycl::id<2>indexBordered){

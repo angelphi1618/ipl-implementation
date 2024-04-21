@@ -44,7 +44,7 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 	}
 	
 
-	image<DataT, AllocatorT>* bordered_image = generate_border(src, kernel.kernel_size, border_type, default_value);
+	// image<DataT, AllocatorT>* bordered_image = generate_border(src, kernel.kernel_size, border_type, default_value);
 	
 	int kernel_width = kernel.kernel_size[0];
 	int kernel_height = kernel.kernel_size[1];
@@ -55,13 +55,15 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 
 		cgh.depends_on(dependencies);
 
-		pixel<DataT>* src_data = bordered_image->get_data();
+		pixel<DataT>* src_data = src.get_data();
 		ComputeT* kernel_data = static_cast<ComputeT*>(src.get_allocator()->allocate_bytes(kernel.kernel_size.size() * sizeof(ComputeT)));
 		q.memcpy(kernel_data, kernel.kernel_data, kernel.kernel_size.size() * sizeof(ComputeT));
 
 		pixel<DataT>* dst_data = dst.get_data();
 
-		int src_bordered_width = bordered_image->get_size().get(0);
+		int src_bordered_width  = src.get_size().get(0);
+		int src_bordered_height = src.get_size().get(1);
+
 		int dst_width = dst.get_size().get(0);
 
 		// Tamaño de la imagen destino
@@ -72,8 +74,8 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
 
-			int i_src_bordered = i_destino + kernel_height;
-			int j_src_bordered = j_destino + kernel_width;
+			int i_src = i_destino; // + kernel_height;
+			int j_src = j_destino; // + kernel_width;
 
 			pixel<DataT> suma(0, 0, 0, 255);
 
@@ -86,13 +88,14 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 			{
 				for (int jj = 0; jj < kernel_width; jj++)
 				{
-					int ii_src_bordered = ii + i_src_bordered - y_anchor;
-					int jj_src_bordered = jj + j_src_bordered - x_anchor;
-
-					R = R + ((ComputeT)src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].R * kernel_data[ii * kernel_width + jj]);
-					G = G + ((ComputeT)src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].G * kernel_data[ii * kernel_width + jj]);
-					B = B + ((ComputeT)src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].B * kernel_data[ii * kernel_width + jj]);
-					A = A + ((ComputeT)src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].A * kernel_data[ii * kernel_width + jj]);
+					int ii_src = ii + i_src - y_anchor;
+					int jj_src = jj + j_src - x_anchor;
+					pixel<DataT> current_pixel = bordered_pixel_repl(src_data, ii_src, jj_src, src_bordered_width, src_bordered_height);
+					
+					R = R + ((ComputeT)current_pixel.R * kernel_data[ii * kernel_width + jj]);
+					G = G + ((ComputeT)current_pixel.G * kernel_data[ii * kernel_width + jj]);
+					B = B + ((ComputeT)current_pixel.B * kernel_data[ii * kernel_width + jj]);
+					A = A + ((ComputeT)current_pixel.A * kernel_data[ii * kernel_width + jj]);
 				}
 			}
 
