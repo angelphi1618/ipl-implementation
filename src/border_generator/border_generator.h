@@ -13,14 +13,26 @@ image<DataT, AllocatorT>* generate_border(image<DataT, AllocatorT>& img, sycl::r
         value = {DataT(),DataT(), DataT(), DataT()};
     case border_types::const_val:
         return plain_border(img, borderSize, value);
-        break;
     case border_types::repl:
 		return repl_border(img, borderSize);
-		break;
     default:
         break;
     }
+}
 
+template<typename DataT>
+inline pixel<DataT> bordered_pixel_dispatcher(border_types borderType, pixel<DataT>* src, int i, int j, int w, int h, pixel<DataT> value = {}) {
+	switch (borderType)
+    {
+    case border_types::default_val:
+        value = {DataT(),DataT(), DataT(), DataT()};
+    case border_types::const_val:
+        return bordered_pixel_plain(src, i, j, w, h, value);
+    case border_types::repl:
+		return bordered_pixel_repl(src, i, j, w, h);
+    default:
+        break;
+    }
 }
 
 template<typename DataT>
@@ -31,6 +43,7 @@ inline pixel<DataT> bordered_pixel_repl(pixel<DataT>* src, int i, int j, int w, 
 	int upper_bound_width  = w;
 	int upper_bound_height = h;
 	
+	// Nunca nos salimos de los bordes reales de la imagen. Nos mantenemos dentro siempre.
 	int i_src = sycl::max<int>(sycl::min<int>(upper_bound_height - 1, i), low_bound_height);
 	int j_src = sycl::max<int>(sycl::min<int>(upper_bound_width  - 1, j), low_bound_width);
 
@@ -52,7 +65,7 @@ inline pixel<DataT> bordered_pixel_plain(pixel<DataT>* src, int i, int j, int w,
 	int i_src = sycl::max<int>(sycl::min<int>(upper_bound_height - 1, i), low_bound_height);
 	int j_src = sycl::max<int>(sycl::min<int>(upper_bound_width  - 1, j), low_bound_width);
 
-	return value * fuera + (src[i*w + j] * (1 - fuera));
+	return value * fuera + (src[i*w + j] * (1 - fuera)); // Escogemos uno u otro
 }
 
 template<typename DataT, typename AllocatorT>

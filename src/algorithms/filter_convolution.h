@@ -91,7 +91,7 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 					int ii_src = ii + i_src - y_anchor;
 					int jj_src = jj + j_src - x_anchor;
 
-					pixel<DataT> current_pixel = bordered_pixel_plain(src_data, ii_src, jj_src, src_bordered_width, src_bordered_height, {0, 0, 255});
+					pixel<DataT> current_pixel = bordered_pixel_dispatcher(border_type, src_data, ii_src, jj_src, src_bordered_width, src_bordered_height, default_value);
 
 					R = R + ((ComputeT)current_pixel.R * kernel_data[ii * kernel_width + jj]);
 					G = G + ((ComputeT)current_pixel.G * kernel_data[ii * kernel_width + jj]);
