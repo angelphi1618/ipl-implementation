@@ -57,7 +57,7 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 
 		pixel<DataT>* src_data = src.get_data();
 		ComputeT* kernel_data = static_cast<ComputeT*>(src.get_allocator()->allocate_bytes(kernel.kernel_size.size() * sizeof(ComputeT)));
-		q.memcpy(kernel_data, kernel.kernel_data, kernel.kernel_size.size() * sizeof(ComputeT));
+		q.memcpy(kernel_data, kernel.kernel_data, kernel.kernel_size.size() * sizeof(ComputeT)).wait();
 
 		pixel<DataT>* dst_data = dst.get_data();
 
@@ -90,8 +90,9 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 				{
 					int ii_src = ii + i_src - y_anchor;
 					int jj_src = jj + j_src - x_anchor;
-					pixel<DataT> current_pixel = bordered_pixel_repl(src_data, ii_src, jj_src, src_bordered_width, src_bordered_height);
-					
+
+					pixel<DataT> current_pixel = bordered_pixel_plain(src_data, ii_src, jj_src, src_bordered_width, src_bordered_height, {0, 0, 255});
+
 					R = R + ((ComputeT)current_pixel.R * kernel_data[ii * kernel_width + jj]);
 					G = G + ((ComputeT)current_pixel.G * kernel_data[ii * kernel_width + jj]);
 					B = B + ((ComputeT)current_pixel.B * kernel_data[ii * kernel_width + jj]);

@@ -35,12 +35,24 @@ inline pixel<DataT> bordered_pixel_repl(pixel<DataT>* src, int i, int j, int w, 
 	int j_src = sycl::max<int>(sycl::min<int>(upper_bound_width  - 1, j), low_bound_width);
 
 
-	return src[i_src * w + j_src];
+	return src[i_src*w + j_src];
 }
 
 template<typename DataT>
-inline pixel<DataT>bordered_pixel_plain(pixel<DataT>* src, int i, int j, int w, int h, pixel<DataT> value) {
+inline pixel<DataT> bordered_pixel_plain(pixel<DataT>* src, int i, int j, int w, int h, pixel<DataT> value) {
+	DataT fuera = static_cast<DataT>(i < 0 || i >= h || j < 0 || j >= w); // 0 ó 1
 	
+	int low_bound_width  = 0;
+	int low_bound_height = 0;
+
+	int upper_bound_width  = w;
+	int upper_bound_height = h;
+
+	// Ajustamos i y j a los límites aceptables de la imagen
+	int i_src = sycl::max<int>(sycl::min<int>(upper_bound_height - 1, i), low_bound_height);
+	int j_src = sycl::max<int>(sycl::min<int>(upper_bound_width  - 1, j), low_bound_width);
+
+	return value * fuera + (src[i*w + j] * (1 - fuera));
 }
 
 template<typename DataT, typename AllocatorT>

@@ -32,17 +32,17 @@ pixel<DataT> operator*(pixel<DataT>& input_pixel, ComputeT scalar) {
 		static_cast<DataT> (input_pixel.R * scalar),
 		static_cast<DataT> (input_pixel.G * scalar),
 		static_cast<DataT> (input_pixel.B * scalar),
-		static_cast<DataT> (input_pixel.A)
+		static_cast<DataT> (input_pixel.A * scalar)
 	};
 }
 
 template<typename DataT>
-pixel<DataT> operator+(pixel<DataT>& p1, pixel<DataT> p2) {
+pixel<DataT> operator+(pixel<DataT> p1, pixel<DataT> p2) {
 	return {
 		static_cast<DataT>(p1.R + p2.R),
 		static_cast<DataT>(p1.G + p2.G),
 		static_cast<DataT>(p1.B + p2.B),
-		static_cast<DataT>(p1.A)
+		static_cast<DataT>(p1.A + p2.A)
 	};
 }
 
