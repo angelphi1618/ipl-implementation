@@ -54,17 +54,19 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 	int kernel_height = spec.kernel_size;
 	int kernel_width = spec.kernel_size;
 
-	image<DataT, AllocatorT>* bordered_image = generate_border(src, sycl::range<2>(kernel_width, kernel_height), border_type, default_value);
+	// image<DataT, AllocatorT>* bordered_image = generate_border(src, sycl::range<2>(kernel_width, kernel_height), border_type, default_value);
 	
 
 	return q.submit([&](sycl::handler& cgh) {
 
 		cgh.depends_on(dependencies);
 
-		pixel<DataT>* src_data = bordered_image->get_data();
+		pixel<DataT>* src_data = src.get_data();
 		pixel<DataT>* dst_data = dst.get_data();
 
-		int src_bordered_width = bordered_image->get_size().get(0);
+		int src_bordered_width = src.get_size().get(0);
+		int src_bordered_height = src.get_size().get(1);
+		
 		int dst_width = dst.get_size().get(0);
 
 		// Tamaño de la imagen destino
@@ -78,8 +80,8 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
 
-			int i_src_bordered = i_destino + kernel_height;
-			int j_src_bordered = j_destino + kernel_width;
+			int i_src_bordered = i_destino; // + kernel_height;
+			int j_src_bordered = j_destino; // + kernel_width;
 
 			pixel<DataT> I_ij = src_data[i_src_bordered * src_bordered_width + j_src_bordered];
 
@@ -96,7 +98,7 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 					int kk_src_bordered = k + i_src_bordered - y_anchor;
 					int ll_src_bordered = l + j_src_bordered - x_anchor;
 
-					pixel<DataT> I_kl = src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)];
+					pixel<DataT> I_kl = bordered_pixel_dispatcher(border_type, src_data, kk_src_bordered, ll_src_bordered, src_bordered_width, src_bordered_height, default_value);
 
 					ComputeT w = get_w(i_src_bordered, j_src_bordered, kk_src_bordered, ll_src_bordered, twice_sigma_d_sqrd, twice_sigma_i_sqrd, I_ij, I_kl);
 
@@ -106,11 +108,6 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 					sum_Iw_B += I_kl.B * w;
 					sum_Iw_A += I_kl.A * w;
 
-
-					//R = R + ((ComputeT)src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)].R * kernel_data[k * kernel_width + l]);
-					//G = G + ((ComputeT)src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)].G * kernel_data[k * kernel_width + l]);
-					//B = B + ((ComputeT)src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)].B * kernel_data[k * kernel_width + l]);
-					//A = A + ((ComputeT)src_data[kk_src_bordered * src_bordered_width + (ll_src_bordered)].A * kernel_data[k * kernel_width + l]);
 				}
 			}
 			
