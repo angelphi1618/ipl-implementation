@@ -1,7 +1,6 @@
 .vscode/
 bin/
 *.bmp
-
-
+*.png
 *.DS_Store
 *.so
