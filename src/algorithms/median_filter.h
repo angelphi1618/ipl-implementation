@@ -48,16 +48,15 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 	if (spec.window_size > MAX_WINDOW)
 		throw invalid_argument("Tamaño de ventana no permitido. Máx. 5.");
 
-	image<DataT, AllocatorT>* bordered_image = generate_border<DataT, AllocatorT>(src, sycl::range<2>(spec.window_size, spec.window_size), border_type, default_value);
-
-
 	return q.submit([&](sycl::handler& cgh) {
 
 		cgh.depends_on(dependencies);
-		pixel<DataT>* src_data = bordered_image->get_data();
+		pixel<DataT>* src_data = src.get_data();
 		pixel<DataT>* dst_data = dst.get_data();
 
-		int src_bordered_width = bordered_image->get_size().get(0);
+		int src_bordered_width  = src.get_size().get(0);
+		int src_bordered_height = src.get_size().get(1);
+
 		int dst_width = dst.get_size().get(0);
 
         int anchor = (spec.window_size - 1) / 2;
@@ -67,8 +66,8 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
 
-			int i_src_bordered = i_destino + spec.window_size;
-			int j_src_bordered = j_destino + spec.window_size;
+			int i_src_bordered = i_destino; // + spec.window_size;
+			int j_src_bordered = j_destino; // + spec.window_size;
 
 			for (int ii = 0; ii < spec.window_size; ii++)
 			{
@@ -77,7 +76,7 @@ sycl::event median_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<D
 					int ii_src_bordered = ii + i_src_bordered - anchor;
 					int jj_src_bordered = jj + j_src_bordered - anchor;
 
-					window[ii * spec.window_size + jj] = src_data[ii_src_bordered * src_bordered_width + jj_src_bordered];
+					window[ii * spec.window_size + jj] = bordered_pixel_dispatcher(border_type, src_data, ii_src_bordered, jj_src_bordered, src_bordered_width, src_bordered_height, default_value);
 				}
 			}
 
