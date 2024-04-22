@@ -39,7 +39,7 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 		throw unimplemented("Tipo de borde no soportado");
 	}
 
-    image<DataT, AllocatorT>* bordered_image = generate_border(src, kernel.kernel_size, border_type, default_value);
+    // image<DataT, AllocatorT>* bordered_image = generate_border(src, kernel.kernel_size, border_type, default_value);
 	
 	int kernel_width = kernel.kernel_size[0];
 	int kernel_height = kernel.kernel_size[1];
@@ -50,10 +50,12 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 
 		cgh.depends_on(dependencies);
 
-		pixel<DataT>* src_data = bordered_image->get_data();
+		pixel<DataT>* src_data = src.get_data();
 		pixel<DataT>* dst_data = dst.get_data();
 
-		int src_bordered_width = bordered_image->get_size().get(0);
+		int src_bordered_width = src.get_size().get(0);
+		int src_bordered_height = src.get_size().get(1);
+
 		int dst_width = dst.get_size().get(0);
 
         ComputeT alpha = 1 / (ComputeT) kernel.kernel_size.size();
@@ -72,8 +74,8 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 			int i_destino = item.get(1);
 			int j_destino = item.get(0);
 
-			int i_src_bordered = i_destino + kernel_height;
-			int j_src_bordered = j_destino + kernel_width;
+			int i_src_bordered = i_destino; // + kernel_height;
+			int j_src_bordered = j_destino; // + kernel_width;
 
 			pixel<DataT> suma(0, 0, 0, 255);
             ComputeT R = 0;
@@ -88,10 +90,12 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 					int ii_src_bordered = ii + i_src_bordered - y_anchor;
 					int jj_src_bordered = jj + j_src_bordered - x_anchor;
 
-                    R += src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].R * alpha;
-                    G += src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].G * alpha;
-                    B += src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].B * alpha;
-                    A += src_data[ii_src_bordered * src_bordered_width + (jj_src_bordered)].A * alpha;
+					pixel<DataT> current_pixel = bordered_pixel_dispatcher(border_type, src_data, ii_src_bordered, jj_src_bordered, src_bordered_width, src_bordered_height, default_value);
+
+                    R += current_pixel.R * alpha;
+                    G += current_pixel.G * alpha;
+                    B += current_pixel.B * alpha;
+                    A += current_pixel.A * alpha;
 				}
 			}
 
