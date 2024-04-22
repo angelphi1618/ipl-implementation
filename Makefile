@@ -13,7 +13,7 @@ SRCS = $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst $(SRCDIR)/%.cpp,$(BINDIR)/%.o,$(SRCS))
 TARGET = $(BINDIR)/main.out
 
-.PHONY: all clean run tests install
+.PHONY: all clean run tests install benchmarks
 
 all: $(TARGET)
 
@@ -36,3 +36,5 @@ tests:
 	cd ./utils && sh compileTests.sh && sh runTests.sh
 install: $(BINDIR)/ipl.so
 	cd ./utils && ./installWrapper.sh
+benchmarks:
+	cd ./utils && sh compileBenchmarks.sh

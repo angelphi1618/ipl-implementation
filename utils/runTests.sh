@@ -15,7 +15,7 @@ for dir in $BINDIR/tests/*; do
 		cd "$dir"
 
 		if ./$dir_name.out > /dev/null; then
-			if cmp -s $BINDIR/tests/$dir_name/$dir_name.bmp $BINDIR/images/expected/$dir_name/$dir_name.bmp && cmp -s $BINDIR/tests/$dir_name/${dir_name}_roi.bmp $BINDIR/images/expected/$dir_name/${dir_name}_roi.bmp; then
+			if cmp -s $BINDIR/tests/$dir_name/$dir_name.png $ROOTDIR/figures/expected/$dir_name/$dir_name.png; then
 				echo "PASS"
 			else
 				echo "FAILED"

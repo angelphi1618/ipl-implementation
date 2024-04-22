@@ -5,7 +5,7 @@
 #include "../../src/allocators/device_usm_allocator_t.h"
 #include "../../src/image_persistance/png_persistance.h"
 
-#include "../../src/algorithms/box_filter.h"
+#include "../../src/algorithms/gaussian_filter.h"
 
 
 int main() {
@@ -22,16 +22,14 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenBox(Q,    sycl::range(1024, 683), loca);
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageLoader(imagen);
-	imageLoader.loadImage("../../../figures/fdi.png");
+	imageLoader.loadImage("../../../figures/fdi.png");;
 
-	box_filter_spec box_spec({30, 30});
+	gaussian_filter_spec<double> gaussian_spec = {75, 6.4, 6.4};
 
-	box_filter<double>(Q, imagen, imagenBox, box_spec, border_types::repl);
+	gaussian_filter<double>(Q, imagen, imagenBox, gaussian_spec, border_types::repl).wait();
+	gaussian_filter<double>(Q, imagenBox, imagen, gaussian_spec, border_types::repl).wait();
 
-	Q.wait();
-
-	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./box_filter.png");
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./gaussian_filter.png");
 
 	return 0;
-
 }

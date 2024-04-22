@@ -24,11 +24,10 @@ int main() {
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageLoader(imagen);
 	imageLoader.loadImage("../../../figures/fdi.png");
 
-	box_filter_spec box_spec({30, 30});
+	box_filter_spec box_spec({50, 50});
 
-	box_filter<double>(Q, imagen, imagenBox, box_spec, border_types::repl);
+	box_filter<double>(Q, imagen, imagenBox, box_spec, border_types::repl).wait();
 
-	Q.wait();
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./box_filter.png");
 
