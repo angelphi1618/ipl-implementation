@@ -5,7 +5,7 @@
 #include "../../src/allocators/device_usm_allocator_t.h"
 #include "../../src/image_persistance/png_persistance.h"
 
-#include "../../src/algorithms/box_filter.h"
+#include "../../src/algorithms/bilateral_filter.h"
 
 
 int main() {
@@ -17,20 +17,19 @@ int main() {
 
 	roi_rect rectangulo(sycl::range<2>(300,300), sycl::range<2>(496,60));
 
-
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q,       sycl::range(1024, 683), loca, rectangulo);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenBox(Q,    sycl::range(1024, 683), loca);
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageLoader(imagen);
 	imageLoader.loadImage("../../../figures/fdi.png");
 
-	box_filter_spec box_spec({30, 30});
+	bilateral_filter_spec<double> bilateral_spec(9, 75, 75);
 
-	box_filter<double>(Q, imagen, imagenBox, box_spec, border_types::repl);
+	bilateral_filter<double>(Q, imagen, imagenBox, bilateral_spec, border_types::repl).wait();
+	bilateral_filter<double>(Q, imagenBox, imagen, bilateral_spec, border_types::repl).wait();
 
-	Q.wait();
 
-	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./box_filter.png");
+	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./bilateral_filter.png");
 
 	return 0;
 
