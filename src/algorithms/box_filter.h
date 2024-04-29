@@ -68,8 +68,6 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 
 		int dst_width = dst.get_size().get(0);
 
-		#if 1
-
 		
 
 		unsigned int* medias = static_cast<unsigned int*>(src.get_allocator()->allocate_bytes(src.get_linear_size() *sizeof(unsigned int)));
@@ -95,47 +93,23 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 					sum += pixelToFloat4(src_data[cur + x]);
 
 
-				medias[cur] = float4ToUint(sum, scale);			
+				medias[cur] = float4ToUint(sum, scale);		
 
-
-				for (int x = 1; x < r + 1; x++)
+				int right_index, left_index;
+				for (int x = 1; x < dst_width; x++)
 				{
-					int k = cur + x;
-
-					aux = src_data[k + r];
-					sum += pixelToFloat4(aux);
-
-					aux = src_data[cur];
-					sum -= pixelToFloat4(aux);
-
-					medias[k] = float4ToUint(sum, scale);
-				}
-				
-				for (int x = r + 1; x < dst_width - r; x++)
-				{
-					int k = cur + x;
 					
-					aux = src_data[k + r];
-					sum += pixelToFloat4(aux);
-
-					aux = src_data[k - r - 1];
-					sum -= pixelToFloat4(aux);
-
-					medias[k] = float4ToUint(sum, scale);
-				}
-				
-				for (int x = dst_width - r; x < dst_width; x++)
-				{
 					int k = cur + x;
+					right_index = sycl::min(k + r, cur + dst_width - 1);
+					sum += pixelToFloat4(src_data[right_index]);
 
-					aux = src_data[cur + dst_width - 1];
-					sum += pixelToFloat4(aux);
 
-					aux = src_data[k - r - 1];
-					sum -= pixelToFloat4(aux);
+					left_index = sycl::max(cur, k - r - 1);
+					sum -= pixelToFloat4(src_data[left_index]);
 
 					medias[k] = float4ToUint(sum, scale);
 				}
+					
 				
 			});
 
@@ -160,46 +134,30 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 				
 				dst_data[y] = float4ToPixel<DataT>(sum, scale);
 
-				for (int x = 1; x < r + 1; x++)
+				
+				int top_index, bottom_index;
+				for (int x = 1; x < image_height; x++)
 				{
 					int k = x * dst_width + y;
 
-					sum += uintToFloat4(medias[k + dst_width * r]);
-					sum -= uintToFloat4(medias[y]);
+					bottom_index = sycl::min((image_height - 1) * dst_width + y, k + dst_width * r);
+					sum += uintToFloat4(medias[bottom_index]);
+
+					top_index = sycl::max(k - (r * dst_width) - dst_width, y);
+					sum -= uintToFloat4(medias[top_index]);
 
 					dst_data[k] = float4ToPixel<DataT>(sum, scale);
-				}
-
-
-				for (int x = r + 1; x < image_height - r; x++)
-				{
-					int k = x * dst_width + y;
-
-					sum += uintToFloat4(medias[k + dst_width * r]);
-					sum -= uintToFloat4(medias[k - (r * dst_width) - dst_width]);
-
-					dst_data[k] = float4ToPixel<DataT>(sum, scale);
-
 				}
 				
-				for (int x = image_height - r; x < dst_width; x++)
-				{
-					int k = x * dst_width + y;
-
-					sum += uintToFloat4(medias[(image_height - 1) * dst_width + y]);
-					sum -= uintToFloat4(medias[k - (r * dst_width) - dst_width]);
-
-					dst_data[k] = float4ToPixel<DataT>(sum, scale);
-				}
 
 			});
 
 		});
 	
 		
-		#else
 		
-	#endif
+		
+	
 	
 
     
