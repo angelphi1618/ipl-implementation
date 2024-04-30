@@ -55,7 +55,6 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 	int kernel_width = spec.kernel_size;
 
 	// image<DataT, AllocatorT>* bordered_image = generate_border(src, sycl::range<2>(kernel_width, kernel_height), border_type, default_value);
-	
 
 	return q.submit([&](sycl::handler& cgh) {
 
@@ -80,6 +79,8 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 		// Obtenemos el tamaño máximo de work-group ...
 		const int max_size = q.get_device().get_info<cl::sycl::info::device::max_work_group_size>();
 
+		std::cout << "max mem size = " << q.get_device().get_info<sycl::info::device::local_mem_size>() << std::endl;
+
 		// ...fragmentamos ese tamaño en 2 dimensiones
 		int work_group_w = floor(sqrt(max_size));
 		int work_group_h = max_size / work_group_w;
@@ -102,7 +103,7 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 		// Tamaño de la memoria local por cada work-group
 		int slm_width  = left_padding + work_group_w + right_padding ;
 		int slm_height = top_padding  + work_group_h + bottom_padding;
-
+		std::cout << "reserved mem size = " << slm_width*slm_height*sizeof(pixel<DataT>) << std::endl;
 		sycl::accessor<pixel<DataT>, 1, sycl::access::mode::read_write, sycl::access::target::local> slm(slm_width*slm_height, cgh);
 
 		ComputeT twice_sigma_d_sqrd = 2 * spec.sigma_distance * spec.sigma_distance;
