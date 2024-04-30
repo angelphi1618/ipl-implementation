@@ -11,7 +11,7 @@
 int main() {
 	sycl::device dev;
 	dev = sycl::device(sycl::gpu_selector());
-	sycl::queue Q(dev);
+	sycl::queue Q(dev); //, sycl::property::queue::enable_profiling{});
 
 	device_usm_allocator_t<pixel<uint8_t>> loca(Q);
 
@@ -41,8 +41,14 @@ int main() {
 								0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.25f,};
 	filter_convolution_spec<double> kernel_spec({17, 17}, kernel2.data(), 8, 8);
 
-	filter_convolution<double, uint8_t, device_usm_allocator_t<pixel<uint8_t>>>(Q, imagen, imagenBox, kernel_spec, border_types::repl).wait();
-	filter_convolution<double, uint8_t, device_usm_allocator_t<pixel<uint8_t>>>(Q, imagenBox, imagen, kernel_spec, border_types::repl).wait();
+	for (size_t i = 0; i < 5; i++)
+	{
+		filter_convolution<double, uint8_t, device_usm_allocator_t<pixel<uint8_t>>>(Q, imagen, imagenBox, kernel_spec, border_types::repl).wait();
+		filter_convolution<double, uint8_t, device_usm_allocator_t<pixel<uint8_t>>>(Q, imagenBox, imagen, kernel_spec, border_types::repl).wait();
+	}
+	
+
+
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./filter_convolution.png");
 

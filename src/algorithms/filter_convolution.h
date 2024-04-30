@@ -49,8 +49,6 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 	int kernel_width = kernel.kernel_size[0];
 	int kernel_height = kernel.kernel_size[1];
 
-	
-
 	return q.submit([&](sycl::handler& cgh) {
 
 		cgh.depends_on(dependencies);
@@ -69,43 +67,100 @@ sycl::event filter_convolution(sycl::queue& q, image<DataT, AllocatorT>& src, im
 		// Tamaño de la imagen destino
 		int x_anchor = kernel.x_anchor;
 		int y_anchor = kernel.y_anchor;
-		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
 
-			int i_destino = item.get(1);
-			int j_destino = item.get(0);
+		int w = src_bordered_width;
+		int h = src_bordered_height;
 
-			int i_src = i_destino; // + kernel_height;
-			int j_src = j_destino; // + kernel_width;
+		// Obtenemos el tamaño máximo de work-group ...
+		const int max_size = q.get_device().get_info<cl::sycl::info::device::max_work_group_size>();
 
-			pixel<DataT> suma(0, 0, 0, 255);
+		// ...fragmentamos ese tamaño en 2 dimensiones
+		int work_group_w = floor(sqrt(max_size));
+		int work_group_h = max_size / work_group_w;
 
-			ComputeT R = 0;
-            ComputeT G = 0;            
-            ComputeT B = 0;
-            ComputeT A = 0;
+		// Tamaño de cada work-group
+		sycl::range<2> local(work_group_w, work_group_h);
 
-			for (int ii = 0; ii < kernel_height; ii++)
-			{
-				for (int jj = 0; jj < kernel_width; jj++)
+		// Obtenemos la cantidad de los work-groups en cada dimensión
+		int new_w = ceil(w / static_cast<ComputeT>(work_group_w)); // * work_group_w;
+		int new_h = ceil(h / static_cast<ComputeT>(work_group_h)); // * work_group_h;
+
+		sycl::range<2> global(new_w, new_h);
+
+		// Preparamos las variables para hacer uso de la memoria local de cada work-group
+		// Necesitamos un elemento por cada work-item y además los márgenes del work-group
+		// Los márgenes están definidos por el anchor del kernel que vamos a procesar
+		int left_padding = x_anchor ;
+		int right_padding = kernel_width - x_anchor;
+
+		int top_padding = y_anchor;
+		int bottom_padding = kernel_height - y_anchor;
+
+		// Tamaño de la memoria local por cada work-group
+		int slm_width  = left_padding + work_group_w + right_padding ;
+		int slm_height = top_padding  + work_group_h + bottom_padding;
+
+		sycl::accessor<pixel<DataT>, 1, sycl::access::mode::read_write, sycl::access::target::local> slm(slm_width*slm_height, cgh);
+
+		cgh.parallel_for_work_group(global, local, [=](sycl::group<2> grp){
+
+			// Copiamos la memoria global a local teniendo en cuenta los bordes
+			// Cada parallel_for_work_item actúa como barrera global del siguiente
+			grp.parallel_for_work_item(sycl::range<2>(slm_width, slm_height), [=](sycl::h_item<2> it) {
+				int i_destino = it.get_local_id(1); // 0 ... slm_height - 1
+				int j_destino = it.get_local_id(0); // 0 ... slm_width - 1
+
+				int i_src = grp.get_id(1) * work_group_h + i_destino - top_padding;
+				int j_src = grp.get_id(0) * work_group_w + j_destino - left_padding;
+
+				slm[i_destino*slm_width + j_destino] = 
+					bordered_pixel_dispatcher(border_type, src_data, 
+												i_src, j_src, 
+												src_bordered_width,
+												src_bordered_height, 
+												default_value);
+			});
+
+			// Ejecución de la convolución
+			grp.parallel_for_work_item([=](sycl::h_item<2> it) {
+				int i_destino = grp.get_id(1) * work_group_h + it.get_local_id(1) ;
+				int j_destino = grp.get_id(0) * work_group_w + it.get_local_id(0) ;
+
+				j_destino = sycl::min<int>(j_destino, dst_width - 1);
+
+				int i_src = it.get_local_id(1) ; //+ top_padding;
+				int j_src = it.get_local_id(0) ; //+ left_padding;
+
+				pixel<DataT> suma(0, 0, 0, 255);
+				ComputeT R = 0;
+				ComputeT G = 0;            
+				ComputeT B = 0;
+				ComputeT A = 0;
+
+				for (int ii = 0; ii < kernel_height; ii++)
 				{
-					int ii_src = ii + i_src - y_anchor;
-					int jj_src = jj + j_src - x_anchor;
+					for (int jj = 0; jj < kernel_width; jj++)
+					{
+						int ii_src = ii + i_src; // - y_anchor;
+						int jj_src = jj + j_src; // - x_anchor;
 
-					pixel<DataT> current_pixel = bordered_pixel_dispatcher(border_type, src_data, ii_src, jj_src, src_bordered_width, src_bordered_height, default_value);
+						pixel<DataT> current_pixel = slm[ii_src * slm_width + jj_src]; 
 
-					R = R + ((ComputeT)current_pixel.R * kernel_data[ii * kernel_width + jj]);
-					G = G + ((ComputeT)current_pixel.G * kernel_data[ii * kernel_width + jj]);
-					B = B + ((ComputeT)current_pixel.B * kernel_data[ii * kernel_width + jj]);
-					A = A + ((ComputeT)current_pixel.A * kernel_data[ii * kernel_width + jj]);
+						R = R + ((ComputeT)current_pixel.R * kernel_data[ii * kernel_width + jj]);
+						G = G + ((ComputeT)current_pixel.G * kernel_data[ii * kernel_width + jj]);
+						B = B + ((ComputeT)current_pixel.B * kernel_data[ii * kernel_width + jj]);
+						A = A + ((ComputeT)current_pixel.A * kernel_data[ii * kernel_width + jj]);
+					}
 				}
-			}
 
-			dst_data[i_destino * dst_width + j_destino] = {
-				(DataT) R,
-				(DataT) G,
-				(DataT) B,
-				(DataT) A,
-			};
+				dst_data[i_destino * dst_width + j_destino] = {
+					(DataT) R,
+					(DataT) G,
+					(DataT) B,
+					(DataT) A,
+				};
+			});
+
 		});
 	});
 }
@@ -133,8 +188,6 @@ sycl::event filter_convolution_roi(sycl::queue& q, image<DataT, AllocatorT>& src
 	
 	int kernel_width = kernel.kernel_size[0];
 	int kernel_height = kernel.kernel_size[1];
-
-	
 
 	return q.submit([&](sycl::handler& cgh) {
 
