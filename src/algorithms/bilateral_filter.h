@@ -68,61 +68,112 @@ sycl::event bilateral_filter(sycl::queue& q, image<DataT, AllocatorT>& src, imag
 		int src_bordered_height = src.get_size().get(1);
 		
 		int dst_width = dst.get_size().get(0);
+		int dst_height = dst.get_size().get(1);
 
 		// Tamaño de la imagen destino
 		int x_anchor = (kernel_width - 1) / 2;
 		int y_anchor = (kernel_height - 1) / 2;
 
+		int w = src_bordered_width;
+		int h = src_bordered_height;
+
+		// Obtenemos el tamaño máximo de work-group ...
+		const int max_size = q.get_device().get_info<cl::sycl::info::device::max_work_group_size>();
+
+		// ...fragmentamos ese tamaño en 2 dimensiones
+		int work_group_w = floor(sqrt(max_size));
+		int work_group_h = max_size / work_group_w;
+
+		// Tamaño de cada work-group
+		sycl::range<2> local(work_group_w, work_group_h);
+
+		// Obtenemos la cantidad de los work-groups en cada dimensión
+		int new_w = ceil(w / static_cast<ComputeT>(work_group_w)); // * work_group_w;
+		int new_h = ceil(h / static_cast<ComputeT>(work_group_h)); // * work_group_h;
+
+		sycl::range<2> global(new_w, new_h);
+
+		int left_padding = x_anchor ;
+		int right_padding = kernel_width - x_anchor;
+
+		int top_padding = y_anchor;
+		int bottom_padding = kernel_height - y_anchor;
+
+		// Tamaño de la memoria local por cada work-group
+		int slm_width  = left_padding + work_group_w + right_padding ;
+		int slm_height = top_padding  + work_group_h + bottom_padding;
+
+		sycl::accessor<pixel<DataT>, 1, sycl::access::mode::read_write, sycl::access::target::local> slm(slm_width*slm_height, cgh);
+
 		ComputeT twice_sigma_d_sqrd = 2 * spec.sigma_distance * spec.sigma_distance;
 		ComputeT twice_sigma_i_sqrd = 2 * spec.sigma_intensity * spec.sigma_intensity;
 
-		cgh.parallel_for(dst.get_size(), [=](sycl::id<2> item){
-			int i_destino = item.get(1);
-			int j_destino = item.get(0);
+		cgh.parallel_for_work_group(global, local, [=](sycl::group<2> grp){
 
-			int i_src_bordered = i_destino; // + kernel_height;
-			int j_src_bordered = j_destino; // + kernel_width;
+			grp.parallel_for_work_item(sycl::range<2>(slm_width, slm_height), [=](sycl::h_item<2> it) {
+				int i_destino = it.get_local_id(1); // 0 ... slm_height - 1
+				int j_destino = it.get_local_id(0); // 0 ... slm_width - 1
 
-			pixel<DataT> I_ij = src_data[i_src_bordered * src_bordered_width + j_src_bordered];
+				int i_src = grp.get_id(1) * work_group_h + i_destino - top_padding;
+				int j_src = grp.get_id(0) * work_group_w + j_destino - left_padding;
 
-			ComputeT sum_w = 0;
-			ComputeT sum_Iw_R = 0;
-			ComputeT sum_Iw_G = 0;
-			ComputeT sum_Iw_B = 0;
-			ComputeT sum_Iw_A = 0;
+				slm[i_destino*slm_width + j_destino] = 
+					bordered_pixel_dispatcher(border_type, src_data, 
+												i_src, j_src, 
+												src_bordered_width,
+												src_bordered_height, 
+												default_value);
+			});
 
-			for (int k = 0; k < kernel_height; k++)
-			{
-				for (int l = 0; l < kernel_width; l++)
+			grp.parallel_for_work_item([=](sycl::h_item<2> it) {
+				int i_destino = grp.get_id(1) * work_group_h + it.get_local_id(1) ;
+				int j_destino = grp.get_id(0) * work_group_w + it.get_local_id(0) ;
+
+				j_destino = sycl::min<int>(j_destino, dst_width - 1);
+				i_destino = sycl::min<int>(i_destino, dst_height - 1);
+
+				int i_src_bordered = it.get_local_id(1); // + kernel_height;
+				int j_src_bordered = it.get_local_id(0); // + kernel_width;
+
+				pixel<DataT> I_ij = slm[(i_src_bordered + top_padding) * slm_width + j_src_bordered + left_padding];
+
+				ComputeT sum_w = 0;
+				ComputeT sum_Iw_R = 0;
+				ComputeT sum_Iw_G = 0;
+				ComputeT sum_Iw_B = 0;
+				ComputeT sum_Iw_A = 0;
+
+				for (int k = 0; k < kernel_height; k++)
 				{
-					int kk_src_bordered = k + i_src_bordered - y_anchor;
-					int ll_src_bordered = l + j_src_bordered - x_anchor;
+					for (int l = 0; l < kernel_width; l++)
+					{
+						int kk_src_bordered = k + i_src_bordered;
+						int ll_src_bordered = l + j_src_bordered;
 
-					pixel<DataT> I_kl = bordered_pixel_dispatcher(border_type, src_data, kk_src_bordered, ll_src_bordered, src_bordered_width, src_bordered_height, default_value);
+						pixel<DataT> I_kl = slm[(kk_src_bordered) * slm_width + ll_src_bordered];
+						//bordered_pixel_dispatcher(border_type, src_data, kk_src_bordered, ll_src_bordered, src_bordered_width, src_bordered_height, default_value);
 
-					ComputeT w = get_w(i_src_bordered, j_src_bordered, kk_src_bordered, ll_src_bordered, twice_sigma_d_sqrd, twice_sigma_i_sqrd, I_ij, I_kl);
+						ComputeT w = get_w(i_src_bordered + top_padding, j_src_bordered + left_padding, 
+										  kk_src_bordered, ll_src_bordered, twice_sigma_d_sqrd, twice_sigma_i_sqrd, I_ij, I_kl);
 
-					sum_w += w;
-					sum_Iw_R += I_kl.R * w;
-					sum_Iw_G += I_kl.G * w;
-					sum_Iw_B += I_kl.B * w;
-					sum_Iw_A += I_kl.A * w;
-
+						sum_w += w;
+						sum_Iw_R += I_kl.R * w;
+						sum_Iw_G += I_kl.G * w;
+						sum_Iw_B += I_kl.B * w;
+						sum_Iw_A += I_kl.A * w;
+					}
 				}
-			}
-			
-			// os << (int) sum_Iw_R << " / " << (int) sum_w << " = " << (int)(sum_Iw_R / sum_w) << sycl::endl;
 
-			//os << "R=" << (int) (sum_Iw_R / sum_w) << sycl::endl;
+				dst_data[i_destino * dst_width + j_destino]
+				//= I_ij; auto a 
+				= {
+					(DataT) (sum_Iw_R / sum_w),
+					(DataT) (sum_Iw_G / sum_w),
+					(DataT) (sum_Iw_B / sum_w),
+					(DataT) (sum_Iw_A / sum_w),
+				};
 
-			dst_data[i_destino * dst_width + j_destino] = {
-				(DataT) (sum_Iw_R / sum_w),
-				(DataT) (sum_Iw_G / sum_w),
-				(DataT) (sum_Iw_B / sum_w),
-				(DataT) (sum_Iw_A / sum_w),
-			};
-
-			// os << "sumaR = " << suma.R << ", sumaG = " << suma.G << ", sumaB = " << suma.B << ", sumaA = " << suma.A << sycl::endl;
+			});
 		});
 	});
 }
