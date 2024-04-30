@@ -65,7 +65,7 @@ inline pixel<DataT> bordered_pixel_plain(pixel<DataT>* src, int i, int j, int w,
 	int i_src = sycl::max<int>(sycl::min<int>(upper_bound_height - 1, i), low_bound_height);
 	int j_src = sycl::max<int>(sycl::min<int>(upper_bound_width  - 1, j), low_bound_width);
 
-	return value * fuera + (src[i*w + j] * (1 - fuera)); // Escogemos uno u otro
+	return value * fuera + (src[i_src*w + j_src] * (1 - fuera)); // Escogemos uno u otro
 }
 
 template<typename DataT, typename AllocatorT>
