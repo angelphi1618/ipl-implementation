@@ -88,25 +88,28 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 
 				sum = pixelToFloat4(aux) * r;
 
-
+				//Calculamos la media del primer pixel de la fila
 				for (int x = 0; x < r + 1; x++)
 					sum += pixelToFloat4(src_data[cur + x]);
 
-
 				medias[cur] = float4ToUint(sum, scale);		
 
-				int right_index, left_index;
+
+				int right_index, left_index, k;
 				for (int x = 1; x < dst_width; x++)
 				{
-					
-					int k = cur + x;
+					//K representa el pixel actual que estamos procesando 
+					k = cur + x;
+
 					right_index = sycl::min(k + r, cur + dst_width - 1);
+					//Sumamos el nuevo pixel que entra al kernel
 					sum += pixelToFloat4(src_data[right_index]);
 
-
 					left_index = sycl::max(cur, k - r - 1);
+					//Restamos el pixel que ha salido del kernel
 					sum -= pixelToFloat4(src_data[left_index]);
 
+					//Añadimos la media al vector intermedio de medias por filas
 					medias[k] = float4ToUint(sum, scale);
 				}
 					
@@ -117,9 +120,10 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 
 		
 		return q.submit([&](sycl::handler& cgh) {
-
+			
+			//Esperamos la ejecución anterior
 			cgh.depends_on(rowMean);
-
+			//Calculamos ahora la medias de las columnas usando solo el vector "medias" calculadas anteriormente
 			cgh.parallel_for(sycl::range<1>(image_width), [=](sycl::id<1> item){
 
 				int y = item.get(0);
@@ -129,16 +133,17 @@ sycl::event box_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<Data
 
 				sum = uintToFloat4(medias[y]) * (float)r;
 
+				//Calculamos la media del primer pixel de la columna
 				for (int x = 0; x < r + 1; x++)
 					sum += uintToFloat4(medias[x * dst_width + y]);
 				
 				dst_data[y] = float4ToPixel<DataT>(sum, scale);
 
 				
-				int top_index, bottom_index;
+				int top_index, bottom_index, k;
 				for (int x = 1; x < image_height; x++)
 				{
-					int k = x * dst_width + y;
+					k = x * dst_width + y;
 
 					bottom_index = sycl::min((image_height - 1) * dst_width + y, k + dst_width * r);
 					sum += uintToFloat4(medias[bottom_index]);
