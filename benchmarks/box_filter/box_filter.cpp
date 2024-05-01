@@ -26,8 +26,12 @@ int main() {
 
 	box_filter_spec box_spec({50, 50});
 
-	box_filter<double>(Q, imagen, imagenBox, box_spec, border_types::repl).wait();
-
+	for (size_t i = 0; i < 5; i++)
+	{
+		box_filter<double>(Q, imagen, imagenBox, box_spec, border_types::repl).wait();
+		box_filter<double>(Q, imagenBox, imagen, box_spec, border_types::repl).wait();
+	}
+	
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./box_filter.png");
 

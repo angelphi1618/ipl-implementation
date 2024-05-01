@@ -26,8 +26,12 @@ int main() {
 
 	gaussian_filter_spec<double> gaussian_spec = {75, 6.4, 6.4};
 
-	gaussian_filter<double>(Q, imagen, imagenBox, gaussian_spec, border_types::repl).wait();
-	gaussian_filter<double>(Q, imagenBox, imagen, gaussian_spec, border_types::repl).wait();
+	for (size_t i = 0; i < 5; i++)
+	{
+		gaussian_filter<double>(Q, imagen, imagenBox, gaussian_spec, border_types::repl).wait();
+		gaussian_filter<double>(Q, imagenBox, imagen, gaussian_spec, border_types::repl).wait();
+	}
+	
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./gaussian_filter.png");
 
