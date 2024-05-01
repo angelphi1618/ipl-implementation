@@ -20,9 +20,8 @@ struct gaussian_filter_spec{
 			kernel_size(kernel_size), sigma_x(sigma_x), sigma_y(sigma_y) {}
 };
 
-
 template <typename ComputeT = double>
-inline ComputeT gaussian_kernel_at(int i, int j, int kernel_size, int twice_sigma_x_sqrd, int twice_sigma_y_sqrd, ComputeT normalization_factor){
+inline ComputeT gaussian_kernel_at(int i, int j, int kernel_size, ComputeT twice_sigma_x_sqrd, ComputeT twice_sigma_y_sqrd, ComputeT normalization_factor){
 	int k = kernel_size;
 
 	ComputeT x_axis_component = (k/2 - i) * (k/2 - i);
@@ -33,7 +32,6 @@ inline ComputeT gaussian_kernel_at(int i, int j, int kernel_size, int twice_sigm
 
 	return exp(-(x_axis_component + y_axis_component)) * normalization_factor;
 }
-
 
 template <typename ComputeT = float, typename DataT, typename AllocatorT>
 sycl::event gaussian_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
@@ -58,29 +56,27 @@ sycl::event gaussian_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image
 
 	ComputeT* gaussian_kernel = static_cast<ComputeT*>(src.get_allocator()->allocate_bytes(kernel_width*kernel_height*sizeof(ComputeT)));
 
+
+
 	// Inicializamos el kernel gaussiano
 	return q.submit([&](sycl::handler& cgh) {
-
-		cgh.depends_on(dependencies);
-
 		pixel<DataT>* src_data = src.get_data();
 		pixel<DataT>* dst_data = dst.get_data();
-
 
 		ComputeT sigma_x = kernel_spec.sigma_x;
 		ComputeT sigma_y = kernel_spec.sigma_y;
 		ComputeT normalization_factor = 1 / (2 * M_PI * sigma_x * sigma_y);
 
-		int k = kernel_width;
-
-		int twice_sigma_x_sqrd = 2 * sigma_x * sigma_x;
-		int twice_sigma_y_sqrd = 2 * sigma_y * sigma_y;
-
 		int src_bordered_width  = src.get_size().get(0);
 		int src_bordered_height = src.get_size().get(1);
 
+		int k = kernel_width;
+
+		ComputeT twice_sigma_x_sqrd = 2 * sigma_x * sigma_x;
+		ComputeT twice_sigma_y_sqrd = 2 * sigma_y * sigma_y;
+
 		int dst_width = dst.get_size().get(0);
-		int dst_height = dst.get_size().get(0);
+		int dst_height = dst.get_size().get(1);
 
 		// Tamaño de la imagen destino
 		int x_anchor = (kernel_width - 1) / 2;
@@ -105,73 +101,47 @@ sycl::event gaussian_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image
 
 		sycl::range<2> global(new_w, new_h);
 
-		// Preparamos las variables para hacer uso de la memoria local de cada work-group
-		// Necesitamos un elemento por cada work-item y además los márgenes del work-group
-		// Los márgenes están definidos por el anchor del kernel que vamos a procesar
-		int left_padding = x_anchor ;
-		int right_padding = kernel_width - x_anchor;
 
-		int top_padding = y_anchor;
-		int bottom_padding = kernel_height - y_anchor;
-
-		// Tamaño de la memoria local por cada work-group
-		int slm_width  = left_padding + work_group_w + right_padding ;
-		int slm_height = top_padding  + work_group_h + bottom_padding;
-
-		sycl::accessor<pixel<DataT>, 1, sycl::access::mode::read_write, sycl::access::target::local> slm(slm_width*slm_height, cgh);
-
+		sycl::accessor<ComputeT, 1, sycl::access::mode::read_write, sycl::access::target::local> slm_kernel(kernel_width*kernel_height, cgh);
 		cgh.parallel_for_work_group(global, local, [=](sycl::group<2> grp){
 
-			// Copiamos la memoria global a local teniendo en cuenta los bordes
-			// Cada parallel_for_work_item actúa como barrera global del siguiente
-			grp.parallel_for_work_item(sycl::range<2>(slm_width, slm_height), [=](sycl::h_item<2> it) {
-				int i_destino = it.get_local_id(1); // 0 ... slm_height - 1
-				int j_destino = it.get_local_id(0); // 0 ... slm_width - 1
+			grp.parallel_for_work_item(sycl::range<2>(kernel_width, kernel_height), [=] (sycl::h_item<2> it){
+				int i = it.get_local_id(1);
+				int j = it.get_local_id(0);
 
-				int i_src = grp.get_id(1) * work_group_h + i_destino - top_padding;
-				int j_src = grp.get_id(0) * work_group_w + j_destino - left_padding;
-
-				slm[i_destino*slm_width + j_destino] = 
-					bordered_pixel_dispatcher(border_type, src_data, 
-												i_src, j_src, 
-												src_bordered_width,
-												src_bordered_height, 
-												default_value);
+				slm_kernel[i * kernel_width + j] = gaussian_kernel_at(i, j, kernel_width, twice_sigma_x_sqrd, twice_sigma_y_sqrd, normalization_factor);
 			});
 
-			// Ejecución de la convolución
-			grp.parallel_for_work_item([=](sycl::h_item<2> it) {
+			grp.parallel_for_work_item([=] (sycl::h_item<2> it){
 				int i_destino = grp.get_id(1) * work_group_h + it.get_local_id(1) ;
 				int j_destino = grp.get_id(0) * work_group_w + it.get_local_id(0) ;
 
+				i_destino = sycl::min<int>(i_destino, dst_height - 1);
 				j_destino = sycl::min<int>(j_destino, dst_width - 1);
 
-				int i_src = it.get_local_id(1);// + top_padding;
-				int j_src = it.get_local_id(0);// + left_padding;
-
 				ComputeT R = 0;
-				ComputeT G = 0;            
+				ComputeT G = 0;
 				ComputeT B = 0;
 				ComputeT A = 0;
-				pixel<DataT> current_pixel = slm[i_src * slm_width + j_src]; 
 
 				for (int ii = 0; ii < kernel_height; ii++)
 				{
 					for (int jj = 0; jj < kernel_width; jj++)
 					{
-						int ii_src = ii + i_src;//  + y_anchor;
-						int jj_src = jj + j_src;//  + x_anchor;
+						int ii_src = ii + i_destino - y_anchor;
+						int jj_src = jj + j_destino - x_anchor;
 
-						pixel<DataT> current_pixel = slm[ii_src * slm_width + jj_src]; 
-						ComputeT kernel_val = gaussian_kernel_at(ii, jj, kernel_width, twice_sigma_x_sqrd, twice_sigma_y_sqrd, normalization_factor);
-						R = R + ((ComputeT)(current_pixel.R) * kernel_val);
-						G = G + ((ComputeT)(current_pixel.G) * kernel_val);
-						B = B + ((ComputeT)(current_pixel.B) * kernel_val);
-						A = A + ((ComputeT)(current_pixel.A) * kernel_val);
+						pixel<DataT> current_pixel = bordered_pixel_dispatcher(border_type, src_data, ii_src, jj_src, src_bordered_width, src_bordered_height, default_value);
+
+						R = R + ((ComputeT) current_pixel.R * slm_kernel[ii * kernel_width + jj]);
+						G = G + ((ComputeT) current_pixel.G * slm_kernel[ii * kernel_width + jj]);
+						B = B + ((ComputeT) current_pixel.B * slm_kernel[ii * kernel_width + jj]);
+						A = A + ((ComputeT) current_pixel.A * slm_kernel[ii * kernel_width + jj]);
+
 					}
 				}
 
-				dst_data[i_destino * dst_width + j_destino] = {
+				dst_data[i_destino*dst_width + j_destino] = {
 					(DataT) R,
 					(DataT) G,
 					(DataT) B,
@@ -181,6 +151,7 @@ sycl::event gaussian_filter(sycl::queue& q, image<DataT, AllocatorT>& src, image
 		});
 	});
 }
+
 
 template <typename ComputeT = float, typename DataT, typename AllocatorT>
 sycl::event gaussian_filter_roi(sycl::queue& q, image<DataT, AllocatorT>& src, image<DataT, AllocatorT>& dst,
