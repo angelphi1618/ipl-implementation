@@ -25,9 +25,12 @@ int main() {
 
 	bilateral_filter_spec<double> bilateral_spec(9, 75, 75);
 
-	bilateral_filter<double>(Q, imagen, imagenBox, bilateral_spec, border_types::repl).wait();
-	bilateral_filter<double>(Q, imagenBox, imagen, bilateral_spec, border_types::repl).wait();
-
+	for (size_t i = 0; i < 5; i++)
+	{
+		bilateral_filter<double>(Q, imagen, imagenBox, bilateral_spec, border_types::repl).wait();
+		bilateral_filter<double>(Q, imagenBox, imagen, bilateral_spec, border_types::repl).wait();
+	}
+	
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./bilateral_filter.png");
 

@@ -26,9 +26,12 @@ int main() {
 
 	median_spec median = {3};
 
-	median_filter<uint8_t>(Q, imagen, imagenBox, median);
-
-	Q.wait();
+	for (size_t i = 0; i < 5; i++)
+	{
+		median_filter<uint8_t>(Q, imagen, imagenBox, median).wait();
+		median_filter<uint8_t>(Q, imagenBox, imagen, median).wait();
+	}
+	
 
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(imagenBox, "./median_filter.png");
 
