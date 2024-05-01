@@ -23,7 +23,7 @@ int main() {
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageLoader(imagen);
 	imageLoader.loadImage("../../../figures/fdi.png");
 
-	bilateral_filter_spec<double> bilateral_spec(9, 75, 75);
+	bilateral_filter_spec<double> bilateral_spec(36, 150, 150);
 
 	for (size_t i = 0; i < 5; i++)
 	{
