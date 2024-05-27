@@ -1,3 +1,7 @@
+/*
+	Este archivo es exclusivamente para pruebas de la librería,
+	es completamente ajeno a su implementación.
+*/
 #include "allocators/host_usm_allocator_t.h"
 #include "allocators/device_usm_allocator_t.h"
 
@@ -42,12 +46,12 @@ int main() {
 		<< Q.get_device().get_info<sycl::info::device::name>()
 		<< std::endl;
 
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPruebaAllocator(Q, sycl::range(1200, 900));
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPruebaAllocator(Q, sycl::range(1024, 683));
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderP(imagenPruebaAllocator);
-	imageloaderP.loadImage("images/lolita.bmp");
+	imageloaderP.loadImage("../../figures/fdi.bmp");
 	imageloaderP.saveImage("images/pruebaAllocator.bmp");
 
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagen(Q, sycl::range(1024, 683), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLena(Q, sycl::range(512, 512), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lenaSeparada(Q, sycl::range(512, 512), loca);
 
@@ -61,12 +65,12 @@ int main() {
 
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaOutputBox(Q, sycl::range(512, 512), loca);
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaEnLaCaja(Q, sycl::range(1200, 900), loca);
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGaussiana(Q, sycl::range(1200, 900), loca);
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaGris(Q, sycl::range(1200, 900), loca);
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaSobel(Q, sycl::range(1200, 900), loca);
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaBilateral(Q, sycl::range(1200, 900), loca);
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> lolitaConvolucionada(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> fdiEnLaCaja(Q, sycl::range(1024, 683), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> fdiGaussiana(Q, sycl::range(1024, 683), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> fdiGris(Q, sycl::range(1024, 683), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> fdiSobel(Q, sycl::range(1024, 683), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> fdiBilateral(Q, sycl::range(1024, 683), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> fdiConvolucionada(Q, sycl::range(1024, 683), loca);
 
 	//median_spec median = {5};
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenLenaMediana(Q, sycl::range(512, 512), loca);
@@ -78,7 +82,7 @@ int main() {
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderLena(imagenLena);
 
 
-	imageloader.loadImage("images/lolita.bmp");
+	imageloader.loadImage("images/fdi.bmp");
 	imageloaderLena.loadImage("images/prueba.bmp");
 	imageloaderLenaRecortada.loadImage("images/lenaRecortada.bmp");
 
@@ -87,11 +91,11 @@ int main() {
 	//aaa.wait();
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaMediana, "images/lenaMediana.bmp");
 
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorder = generate_border(imagen, {52, 70}, border_types::const_val, {0, 0, 255, 255});
-	imageloader.saveImage("images/lolitaLocal.bmp");
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lolitaBorder, "images/lolitaConBorde.bmp");
-	imageloader.saveImage("images/lolita2.bmp");
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagen, "images/lolitaDesdeFuera.bmp");
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* fdiBorder = generate_border(imagen, {52, 70}, border_types::const_val, {0, 0, 255, 255});
+	imageloader.saveImage("images/fdiLocal.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*fdiBorder, "images/fdiConBorde.bmp");
+	imageloader.saveImage("images/fdi2.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagen, "images/fdiDesdeFuera.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPika(Q, sycl::range(400,400), loca);
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenPikaGauss(Q, sycl::range(400,400), loca);
@@ -110,8 +114,8 @@ int main() {
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> pikaAtrapada(Q, sycl::range(400,400), loca);
 
 
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lolitaBorderRepl = generate_border(imagen, {52, 70}, border_types::repl);
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lolitaBorderRepl, "images/lolitaConBordeRepl.bmp");
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* fdiBorderRepl = generate_border(imagen, {52, 70}, border_types::repl);
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*fdiBorderRepl, "images/fdiConBordeRepl.bmp");
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* lenitaBorderRepl = generate_border(imagenLena, {100, 50}, border_types::repl);
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(*lenitaBorderRepl, "images/lenita.bmp");
@@ -141,16 +145,16 @@ int main() {
 	filter_convolution_spec<int> kernel_spec({3 ,3}, kernel2.data(),1, 1);
 
 	
-	filter_convolution<int>(Q, imagen, lolitaConvolucionada, kernel_spec, border_types::repl).wait();
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lolitaConvolucionada, "images/lolitaConvolucionada.bmp");
+	filter_convolution<int>(Q, imagen, fdiConvolucionada, kernel_spec, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(fdiConvolucionada, "images/fdiConvolucionada.bmp");
 	std::cout << "filtrado convolucion " << std::endl;
 	filter_convolution<int>(Q, imagenLena, imagenLenaOutput, kernel_spec, border_types::repl).wait();
 	std::cout << "filtrado convolucion ok" << std::endl;
 
 	box_filter_spec box_spec({30, 30});
 
-	box_filter<float>(Q, imagen, lolitaEnLaCaja, box_spec, border_types::repl).wait();
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lolitaEnLaCaja, "images/lolitaEnLaAtrapadaaa.bmp");
+	box_filter<float>(Q, imagen, fdiEnLaCaja, box_spec, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(fdiEnLaCaja, "images/fdiEnLaAtrapadaaa.bmp");
 
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaOutput, "images/lenitaFiltrada.bmp");
 
@@ -191,8 +195,8 @@ int main() {
 	
 	png_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(ye_bilateral, "images/yeBilateral.png");
 
-	bilateral_filter<double>(Q, imagen, lolitaBilateral, b_filter_spec, border_types::repl).wait();
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(lolitaBilateral, "images/lolitaBilateral.bmp");
+	bilateral_filter<double>(Q, imagen, fdiBilateral, b_filter_spec, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(fdiBilateral, "images/fdiBilateral.bmp");
 
 	bilateral_filter<double>(Q, imagenLena, imagenLenaBilateral, b_filter_spec, border_types::repl).wait();
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenLenaBilateral, "images/imagenLenaBilateral.bmp");
@@ -212,8 +216,8 @@ int main() {
 
 
 	gaussian_filter_spec<double> gaussian_spec(9, 75, 75);
-	gaussian_filter<double>(Q, imagen, lolitaGaussiana, gaussian_spec, border_types::const_val, {255,128,0,255}).wait();
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(lolitaGaussiana, "images/gauss/ye_gaussiano.bmp");
+	gaussian_filter<double>(Q, imagen, fdiGaussiana, gaussian_spec, border_types::const_val, {255,128,0,255}).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(fdiGaussiana, "images/gauss/ye_gaussiano.bmp");
 	std::cout << "--------------------------------------------" << std::endl;
 	
 
@@ -238,23 +242,23 @@ int main() {
 
 	std::cout << "sobel" << std::endl;
 
-	gaussian_filter<double>(Q, imagen, lolitaGaussiana, gaussian_spec, border_types::repl).wait();
-	rgb_to_gray(Q, lolitaGaussiana, lolitaGris).wait();
-	sobel_filter(Q, lolitaGris, lolitaSobel, {3}, border_types::repl).wait();
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(lolitaSobel, "images/gauss/lolitaSobel.bmp");
+	gaussian_filter<double>(Q, imagen, fdiGaussiana, gaussian_spec, border_types::repl).wait();
+	rgb_to_gray(Q, fdiGaussiana, fdiGris).wait();
+	sobel_filter(Q, fdiGris, fdiSobel, {3}, border_types::repl).wait();
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(fdiSobel, "images/gauss/fdiSobel.bmp");
 	std::cout << "--------------------------------------------" << std::endl;
 
 
 
 	/*
 
-	image<uint8_t> imagen2(Q, sycl::range(1200, 900));
+	image<uint8_t> imagen2(Q, sycl::range(1024, 683));
 	bmp_persistance<uint8_t> imageloader2(imagen2);
 
-	imageloader2.loadImage("lolita.bmp");
-	imageloader2.saveImage("lolita3.bmp");
+	imageloader2.loadImage("fdi.bmp");
+	imageloader2.saveImage("fdi3.bmp");
 
-	bmp_persistance<uint8_t>::saveImage(imagen2, "lolitaestatica.bmp");
+	bmp_persistance<uint8_t>::saveImage(imagen2, "fdiestatica.bmp");
 
 	roi_rect rectangulo(sycl::range<2>(300,300), sycl::range<2>(496,60));
 
@@ -262,21 +266,21 @@ int main() {
 	//image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagen3 = imagen.get_roi({sycl::range<2>(500,500), sycl::range<2>(0, 0)});
 
 	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>* imagen3 = imagen.get_roi(rectangulo);
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagen3, "lolitaroi.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>>::saveImage(*imagen3, "fdiroi.bmp");
 
 
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenColor(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenColor(Q, sycl::range(1024, 683), loca);
 	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imageloaderColor(imagenColor);
-	imageloaderColor.loadImage("lolita.bmp");
+	imageloaderColor.loadImage("fdi.bmp");
 
-	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenGris(Q, sycl::range(1200, 900), loca);
+	image<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> imagenGris(Q, sycl::range(1024, 683), loca);
 	std::cout << "imagen cargada" << std::endl;
 
 	rgb_to_gray_roi(Q, imagenColor, imagenGris).wait();
 
 	std::cout << "A guardar la imagen" << std::endl;
 
-	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenGris, "lolitagris.bmp");
+	bmp_persistance<uint8_t, device_usm_allocator_t<pixel<uint8_t>>> ::saveImage(imagenGris, "fdigris.bmp");
 
 	std::cout<<"hola" << std::endl;
 	*/
